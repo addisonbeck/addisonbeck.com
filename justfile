@@ -15,20 +15,19 @@ render:
 build: render
     cd site && npm run build
 
-# Development: watch mode
-# Reruns renderer when export cache changes, then triggers Astro dev server
+# Development: full build then preview server with export cache watcher
 dev:
     #!/usr/bin/env bash
     set -euo pipefail
-    echo "Starting Astro dev server..."
-    cd site && npm run dev &
-    ASTRO_PID=$!
-    trap "kill $ASTRO_PID 2>/dev/null" EXIT
-    echo "Watching ~/.cache/org-roam-export for changes..."
+    just build
+    cd site && npm run preview &
+    PREVIEW_PID=$!
+    trap "kill $PREVIEW_PID 2>/dev/null" EXIT
+    echo "Watching ~/.cache/org-roam-export for changes (Ctrl+C to stop)..."
     while true; do
         if command -v fswatch &>/dev/null; then
-            fswatch -1 ~/.cache/org-roam-export/ && just render
+            fswatch -1 ~/.cache/org-roam-export/ && just build
         else
-            sleep 30 && just render
+            sleep 30 && just build
         fi
     done
