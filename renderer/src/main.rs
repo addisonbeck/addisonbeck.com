@@ -124,7 +124,7 @@ fn main() {
 
 /// Load a single node file from the sharded input directory.
 fn load_node(input_dir: &str, uuid: &str) -> types::NodeFile {
-    let shard = &uuid[..2].to_lowercase();
+    let shard = &uuid[..2];
     let path = format!("{}/{}/{}.json", input_dir, shard, uuid);
     let content =
         fs::read_to_string(&path).unwrap_or_else(|e| panic!("Cannot read node {}: {}", path, e));
