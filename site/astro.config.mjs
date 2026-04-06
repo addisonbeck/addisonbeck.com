@@ -9,6 +9,9 @@ export default defineConfig({
     pagefind(),
   ],
   outDir: './dist',
+  server: {
+    allowedHosts: true,
+  },
   vite: {
     plugins: [
       {
@@ -27,9 +30,6 @@ export default defineConfig({
         },
       },
     ],
-    preview: {
-      allowedHosts: true,
-    },
     build: {
       rollupOptions: {
         external: ['/pagefind/pagefind-ui.js'],
