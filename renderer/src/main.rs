@@ -1,6 +1,7 @@
 use clap::Parser;
 
 mod render;
+mod slug;
 mod types;
 
 #[derive(Parser, Debug)]
