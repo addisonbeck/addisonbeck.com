@@ -28,7 +28,7 @@ export default defineConfig({
       },
     ],
     preview: {
-      allowedHosts: ['bw'],
+      allowedHosts: true,
     },
     build: {
       rollupOptions: {
