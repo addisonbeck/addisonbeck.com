@@ -4,7 +4,7 @@
 
 addisonbeck.com is a static site that renders an org-roam second brain as a public-facing web reader. A Rust binary converts org-element AST JSON exports into HTML fragments; Astro consumes those fragments to build a fully static site with backlink navigation and full-text search via Pagefind.
 
-The org-roam export cache at `~/.cache/org-roam-export/` is produced by a separate Emacs batch export job and must be pre-populated before the build pipeline runs.
+The org-roam export cache is committed to `export-cache/` in this repository. The Nix devshell automatically syncs `~/.cache/org-roam-export/` → `export-cache/` on entry, so by the time any `just` command runs, the local data is current. CI uses `export-cache/` directly from the checkout.
 
 ## Architecture & Patterns
 
@@ -30,11 +30,11 @@ graph TD
 
 ### Build Pipeline
 
-1. `nix develop` — enters the Nix devshell with all tools available (Rust, Node.js, just, rsync)
-2. `just render` — runs `cargo run --release` in `renderer/`, reads `~/.cache/org-roam-export/` and writes `rendered/`
+1. `nix develop` — enters the Nix devshell; automatically syncs `~/.cache/org-roam-export/` → `export-cache/`
+2. `just render` — runs `cargo run --release` in `renderer/`, reads `export-cache/` and writes `rendered/`
 3. `just build` — runs `just render` then `npm run build` in `site/`, which produces `site/dist/` and runs Pagefind indexing
 
-`just build` assumes the org-roam export cache exists. If `~/.cache/org-roam-export/manifest.json` is missing, the renderer will fail.
+`just build` reads from `export-cache/`. If `export-cache/manifest.json` is missing, the renderer will fail. Always enter `nix develop` before running `just` commands to ensure the cache is current.
 
 ### Directory Structure
 
@@ -42,6 +42,7 @@ graph TD
 website-redesign/
 ├── renderer/           # Rust crate: org-element AST → HTML fragments
 ├── site/               # Astro project: static site generation
+├── export-cache/       # Committed org-roam export data (synced from ~/.cache/org-roam-export/ by devshell)
 ├── rendered/           # Build artifact (gitignored): renderer output
 ├── .github/
 │   └── workflows/
@@ -81,7 +82,8 @@ The deploy workflow requires exactly these four secrets — do not rename them:
 
 ## Anti-Patterns
 
-- **Never commit `rendered/`** — this is a build artifact regenerated from the org-roam cache.
+- **Never commit `rendered/`** — this is a build artifact regenerated from `export-cache/`.
+- **Do not manually edit `export-cache/`** — it is managed by the devshell sync from `~/.cache/org-roam-export/`. Edit your org-roam nodes in Emacs, re-export, then re-enter `nix develop`.
 - **Never commit `site/dist/`** — this is the Astro build output.
 - **Do not change GitHub Actions secret names** — the workflow references `DEPLOY_HOST`, `DEPLOY_USERNAME`, `DEPLOY_KEY_PRI`, and `DEPLOY_PATH` exactly.
 - **Do not use pnpm** — this project uses npm. Using pnpm will create a `pnpm-lock.yaml` and break the Nix build.
@@ -93,8 +95,9 @@ The deploy workflow requires exactly these four secrets — do not rename them:
 
 Each org-roam node is exported as a JSON file at:
 ```
-~/.cache/org-roam-export/<shard>/<UUID>.json
+export-cache/<shard>/<UUID>.json
 ```
+(synced from `~/.cache/org-roam-export/` by the Nix devshell on entry)
 
 Where `<shard>` is the first two characters of the UUID (e.g., `ab/abcd1234-...json`).
 

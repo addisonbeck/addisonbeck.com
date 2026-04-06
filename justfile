@@ -8,7 +8,7 @@ default:
 # Render org-roam export to HTML fragments
 render:
     cargo run --release --manifest-path renderer/Cargo.toml -- \
-        --input ~/.cache/org-roam-export \
+        --input export-cache \
         --output rendered
 
 # Build full site: render then Astro build

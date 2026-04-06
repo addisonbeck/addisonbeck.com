@@ -28,6 +28,13 @@
             echo "addisonbeck.com devshell"
             echo "Rust: $(rustc --version)"
             echo "Node: $(node --version)"
+            if [ -d "$HOME/.cache/org-roam-export" ]; then
+              echo "Syncing org-roam export cache → export-cache/..."
+              rsync -a --delete "$HOME/.cache/org-roam-export/" export-cache/
+              echo "Export cache synced."
+            else
+              echo "Warning: ~/.cache/org-roam-export not found — export-cache/ may be stale"
+            fi
             just --list 2>/dev/null || true
           '';
         };
