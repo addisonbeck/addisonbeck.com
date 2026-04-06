@@ -174,11 +174,29 @@ Requires Emacs 27.1+ for `proper-list-p'."
         (let ((serialized
                (with-temp-buffer
                  (insert-file-contents file)
-                 (let ((ast (org-element-parse-buffer)))
-                   (message "  [diag] step 2: ast type=%S car-type=%S"
-                            (type-of ast) (type-of (car-safe ast)))
-                   (message "  [diag] step 2b: serializing")
-                   (org-roam-export--serialize-ast ast)))))
+                 (let* ((ast (org-element-parse-buffer))
+                        (result (progn
+                                  (message "  [diag] step 2: ast type=%S car-type=%S"
+                                           (type-of ast) (type-of (car-safe ast)))
+                                  (message "  [diag] step 2b: serializing")
+                                  (org-roam-export--serialize-ast ast))))
+                   (message "  [diag] step 2c: copying media")
+                   (let ((image-exts '(".png" ".jpg" ".jpeg" ".gif" ".svg" ".webp" ".avif"))
+                         (media-dir (expand-file-name (concat "media/" id) output-dir))
+                         (org-dir (file-name-directory file)))
+                     (org-element-map ast 'link
+                       (lambda (link)
+                         (when (string= (org-element-property :type link) "file")
+                           (let* ((path (org-element-property :path link))
+                                  (ext (downcase (or (file-name-extension path t) ""))))
+                             (when (member ext image-exts)
+                               (let* ((src (expand-file-name path org-dir))
+                                      (dest (expand-file-name (file-name-nondirectory path) media-dir)))
+                                 (if (file-exists-p src)
+                                     (progn (make-directory media-dir t)
+                                            (copy-file src dest t))
+                                   (message "org-roam-export: WARNING missing media %s" src)))))))))
+                   result))))
           (message "  [diag] step 3: querying links")
           (let* ((links-to
                   (mapcar #'car

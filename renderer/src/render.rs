@@ -4,6 +4,12 @@ use std::collections::HashMap;
 /// Maps node UUID -> canonical URL slug
 pub type SlugMap = HashMap<String, String>;
 
+/// Context passed through the render tree.
+pub struct RenderContext<'a> {
+    pub slug_map: &'a SlugMap,
+    pub media_map: &'a HashMap<String, String>,
+}
+
 /// Escape HTML special characters
 pub fn html_escape(s: &str) -> String {
     s.replace('&', "&amp;")
@@ -14,13 +20,13 @@ pub fn html_escape(s: &str) -> String {
 
 /// Render a complete node AST to an HTML fragment string.
 /// `ast` is the full AST value from NodeFile.ast.
-/// `slugs` maps UUID -> slug for resolving id: links.
-pub fn render_ast(ast: &Value, slugs: &SlugMap) -> String {
-    render_node(ast, slugs)
+/// `ctx` carries slug and media maps for resolving links.
+pub fn render_ast(ast: &Value, ctx: &RenderContext) -> String {
+    render_node(ast, ctx)
 }
 
 /// Recursively render a single AST node (array or string) to HTML.
-fn render_node(node: &Value, slugs: &SlugMap) -> String {
+fn render_node(node: &Value, ctx: &RenderContext) -> String {
     match node {
         // Plain text string — HTML-escape it
         Value::String(s) => html_escape(s),
@@ -30,7 +36,7 @@ fn render_node(node: &Value, slugs: &SlugMap) -> String {
             let element_type = arr[0].as_str().unwrap_or("");
             let props = &arr[1];
             let children = &arr[2..];
-            let html = dispatch(element_type, props, children, slugs);
+            let html = dispatch(element_type, props, children, ctx);
             // org-element stores trailing whitespace after inline elements in
             // post-blank (e.g. the space between *bold* and the next word).
             // Append it so inline runs don't collapse into each other.
@@ -52,43 +58,43 @@ fn render_node(node: &Value, slugs: &SlugMap) -> String {
 }
 
 /// Render all children and join without separator.
-fn render_children(children: &[Value], slugs: &SlugMap) -> String {
-    children.iter().map(|c| render_node(c, slugs)).collect()
+fn render_children(children: &[Value], ctx: &RenderContext) -> String {
+    children.iter().map(|c| render_node(c, ctx)).collect()
 }
 
 /// Dispatch on element type string and produce HTML.
-fn dispatch(element_type: &str, props: &Value, children: &[Value], slugs: &SlugMap) -> String {
+fn dispatch(element_type: &str, props: &Value, children: &[Value], ctx: &RenderContext) -> String {
     match element_type {
         // --- Transparent containers: render children, no wrapper ---
-        "org-data" | "section" => render_children(children, slugs),
+        "org-data" | "section" => render_children(children, ctx),
 
         // --- HTML-wrapped containers ---
         "paragraph" => {
-            let inner = render_children(children, slugs);
+            let inner = render_children(children, ctx);
             format!("<p>{}</p>\n", inner.trim_end())
         }
-        "bold" => format!("<strong>{}</strong>", render_children(children, slugs)),
-        "italic" => format!("<em>{}</em>", render_children(children, slugs)),
-        "underline" => format!("<u>{}</u>", render_children(children, slugs)),
-        "strike-through" => format!("<del>{}</del>", render_children(children, slugs)),
+        "bold" => format!("<strong>{}</strong>", render_children(children, ctx)),
+        "italic" => format!("<em>{}</em>", render_children(children, ctx)),
+        "underline" => format!("<u>{}</u>", render_children(children, ctx)),
+        "strike-through" => format!("<del>{}</del>", render_children(children, ctx)),
         "quote-block" => format!(
             "<blockquote>\n{}\n</blockquote>\n",
-            render_children(children, slugs)
+            render_children(children, ctx)
         ),
         "center-block" => format!(
             "<div class=\"center\">{}\n</div>\n",
-            render_children(children, slugs)
+            render_children(children, ctx)
         ),
         "verse-block" => format!(
             "<pre class=\"verse\">{}</pre>\n",
-            render_children(children, slugs)
+            render_children(children, ctx)
         ),
         "plain-list" => {
             let tag = match props.get("type").and_then(|v| v.as_str()) {
                 Some("ordered") => "ol",
                 _ => "ul",
             };
-            format!("<{tag}>\n{}</{tag}>\n", render_children(children, slugs))
+            format!("<{tag}>\n{}</{tag}>\n", render_children(children, ctx))
         }
         "item" => {
             let checkbox = props.get("checkbox").and_then(|v| v.as_str());
@@ -101,18 +107,18 @@ fn dispatch(element_type: &str, props: &Value, children: &[Value], slugs: &SlugM
             format!(
                 "<li>{}{}</li>\n",
                 checkbox_html,
-                render_children(children, slugs)
+                render_children(children, ctx)
             )
         }
-        "table" => format!("<table>\n{}</table>\n", render_children(children, slugs)),
+        "table" => format!("<table>\n{}</table>\n", render_children(children, ctx)),
         "table-row" => match props.get("type").and_then(|v| v.as_str()) {
             Some("rule") => String::new(),
-            _ => format!("<tr>{}\n</tr>\n", render_children(children, slugs)),
+            _ => format!("<tr>{}\n</tr>\n", render_children(children, ctx)),
         },
-        "table-cell" => format!("<td>{}</td>", render_children(children, slugs)),
+        "table-cell" => format!("<td>{}</td>", render_children(children, ctx)),
 
         // --- Headline: level-based h1-h6 ---
-        "headline" => render_headline(props, children, slugs),
+        "headline" => render_headline(props, children, ctx),
 
         // --- Self-contained: content in props.value ---
         "verbatim" | "code" => {
@@ -135,7 +141,7 @@ fn dispatch(element_type: &str, props: &Value, children: &[Value], slugs: &SlugM
         }
 
         // --- Special rendering ---
-        "link" => render_link(props, children, slugs),
+        "link" => render_link(props, children, ctx),
         "timestamp" => {
             let raw = props
                 .get("raw-value")
@@ -143,8 +149,8 @@ fn dispatch(element_type: &str, props: &Value, children: &[Value], slugs: &SlugM
                 .unwrap_or("");
             format!("<time>{}</time>", html_escape(raw))
         }
-        "subscript" => format!("_{}", render_children(children, slugs)),
-        "superscript" => format!("^{}", render_children(children, slugs)),
+        "subscript" => format!("_{}", render_children(children, ctx)),
+        "superscript" => format!("^{}", render_children(children, ctx)),
         "entity" => {
             // Use HTML entity if available, fall back to name.
             // Only pass through values that look like proper HTML entities
@@ -174,7 +180,7 @@ fn dispatch(element_type: &str, props: &Value, children: &[Value], slugs: &SlugM
         // --- Catch-all: render children transparently ---
         unknown => {
             eprintln!("[renderer] unknown element type: {unknown}");
-            render_children(children, slugs)
+            render_children(children, ctx)
         }
     }
 }
@@ -183,7 +189,7 @@ fn dispatch(element_type: &str, props: &Value, children: &[Value], slugs: &SlugM
 /// Level is clamped to 1-6. Title is the `props.title` array rendered recursively.
 /// todo-keyword is always null in exported AST (Emacs export strips it);
 /// TODO/DONE state appears naturally in the title text — no special handling needed.
-fn render_headline(props: &Value, children: &[Value], slugs: &SlugMap) -> String {
+fn render_headline(props: &Value, children: &[Value], ctx: &RenderContext) -> String {
     let level = props
         .get("level")
         .and_then(|v| v.as_u64())
@@ -197,19 +203,19 @@ fn render_headline(props: &Value, children: &[Value], slugs: &SlugMap) -> String
         .and_then(|v| v.as_array())
         .map(|arr| {
             arr.iter()
-                .map(|item| render_node(item, slugs))
+                .map(|item| render_node(item, ctx))
                 .collect::<String>()
         })
         .unwrap_or_default();
 
     let heading_html = format!("<h{level}>{title_html}</h{level}>\n");
-    let children_html = render_children(children, slugs);
+    let children_html = render_children(children, ctx);
     format!("{heading_html}{children_html}")
 }
 
 /// Render a link element.
 /// Dispatches on link type: id (internal), https/http (external), file/fuzzy (plain text).
-fn render_link(props: &Value, children: &[Value], slugs: &SlugMap) -> String {
+fn render_link(props: &Value, children: &[Value], ctx: &RenderContext) -> String {
     let link_type = props.get("type").and_then(|v| v.as_str()).unwrap_or("");
     let raw_link = props.get("raw-link").and_then(|v| v.as_str()).unwrap_or("");
     let path = props.get("path").and_then(|v| v.as_str()).unwrap_or("");
@@ -218,13 +224,14 @@ fn render_link(props: &Value, children: &[Value], slugs: &SlugMap) -> String {
     let description = if children.is_empty() {
         html_escape(raw_link)
     } else {
-        render_children(children, slugs)
+        render_children(children, ctx)
     };
 
     match link_type {
         "id" => {
             // Resolve UUID to slug if available, fall back to raw UUID path
-            let href = slugs
+            let href = ctx
+                .slug_map
                 .get(path)
                 .map(|s| format!("/{s}"))
                 .unwrap_or_else(|| format!("/{path}"));
@@ -235,8 +242,16 @@ fn render_link(props: &Value, children: &[Value], slugs: &SlugMap) -> String {
             format!("<a href=\"{raw_link}\">{description}</a>")
         }
         "file" => {
-            // Local paths must not become web links
-            format!("<span class=\"file-link\">{description}</span>")
+            if let Some(web_url) = ctx.media_map.get(path) {
+                let alt = if children.is_empty() {
+                    html_escape(path.split('/').last().unwrap_or(path))
+                } else {
+                    render_children(children, ctx)
+                };
+                format!("<img src=\"{web_url}\" alt=\"{alt}\">")
+            } else {
+                format!("<span class=\"file-link\">{description}</span>")
+            }
         }
         _ => {
             // fuzzy, jira:, custom protocols — plain text
@@ -341,15 +356,24 @@ mod tests {
     use super::*;
     use serde_json::json;
 
-    fn empty_slugs() -> SlugMap {
-        HashMap::new()
+    fn empty_ctx<'a>(
+        slug_map: &'a SlugMap,
+        media_map: &'a HashMap<String, String>,
+    ) -> RenderContext<'a> {
+        RenderContext {
+            slug_map,
+            media_map,
+        }
     }
 
     // REND-01: Render paragraph with plain string
     #[test]
     fn test_paragraph_plain_string() {
         let node = json!(["paragraph", null, "Hello world"]);
-        let result = render_node(&node, &empty_slugs());
+        let slugs = SlugMap::new();
+        let media = HashMap::new();
+        let ctx = empty_ctx(&slugs, &media);
+        let result = render_node(&node, &ctx);
         assert!(result.contains("<p>"), "Expected <p> tag");
         assert!(result.contains("Hello world"), "Expected content");
     }
@@ -358,7 +382,10 @@ mod tests {
     #[test]
     fn test_headline_level_clamping() {
         let node = json!(["headline", {"level": 8, "title": ["Deep heading"]}, []]);
-        let result = render_node(&node, &empty_slugs());
+        let slugs = SlugMap::new();
+        let media = HashMap::new();
+        let ctx = empty_ctx(&slugs, &media);
+        let result = render_node(&node, &ctx);
         assert!(result.contains("<h6>"), "Expected level clamped to h6");
         assert!(!result.contains("<h8>"), "Must not emit h8");
     }
@@ -367,7 +394,10 @@ mod tests {
     #[test]
     fn test_src_block_with_language() {
         let node = json!(["src-block", {"language": "rust", "value": "fn main() {}"}, ]);
-        let result = render_node(&node, &empty_slugs());
+        let slugs = SlugMap::new();
+        let media = HashMap::new();
+        let ctx = empty_ctx(&slugs, &media);
+        let result = render_node(&node, &ctx);
         assert!(result.contains("language-rust"), "Expected language class");
         assert!(result.contains("<pre>"), "Expected pre tag");
         assert!(result.contains("fn main()"), "Expected code content");
@@ -382,7 +412,9 @@ mod tests {
             "my-node".to_string(),
         );
         let node = json!(["link", {"type": "id", "raw-link": "id:ABCD1234-0000-0000-0000-000000000000", "path": "ABCD1234-0000-0000-0000-000000000000"}, "My Node"]);
-        let result = render_node(&node, &slugs);
+        let media = HashMap::new();
+        let ctx = empty_ctx(&slugs, &media);
+        let result = render_node(&node, &ctx);
         assert!(
             result.contains("href=\"/my-node\""),
             "Expected resolved slug URL"
@@ -393,7 +425,10 @@ mod tests {
     #[test]
     fn test_external_https_link() {
         let node = json!(["link", {"type": "https", "raw-link": "https://example.com", "path": "//example.com"}, "Example"]);
-        let result = render_node(&node, &empty_slugs());
+        let slugs = SlugMap::new();
+        let media = HashMap::new();
+        let ctx = empty_ctx(&slugs, &media);
+        let result = render_node(&node, &ctx);
         assert!(
             result.contains("href=\"https://example.com\""),
             "Expected full https URL"
@@ -404,7 +439,10 @@ mod tests {
     #[test]
     fn test_file_link_plain_text() {
         let node = json!(["link", {"type": "file", "raw-link": "file:/home/user/doc.org", "path": "/home/user/doc.org"}, "doc.org"]);
-        let result = render_node(&node, &empty_slugs());
+        let slugs = SlugMap::new();
+        let media = HashMap::new();
+        let ctx = empty_ctx(&slugs, &media);
+        let result = render_node(&node, &ctx);
         assert!(
             !result.contains("<a href"),
             "file links must not produce anchor tags"
@@ -436,7 +474,10 @@ mod tests {
             ["bold", {"post-blank": 1}, "markup"],
             "and"
         ]);
-        let result = render_node(&node, &empty_slugs());
+        let slugs = SlugMap::new();
+        let media = HashMap::new();
+        let ctx = empty_ctx(&slugs, &media);
+        let result = render_node(&node, &ctx);
         assert!(
             result.contains("<strong>markup</strong> and"),
             "Expected space between </strong> and following text, got: {result}"
@@ -447,7 +488,36 @@ mod tests {
     #[test]
     fn test_null_props_section_no_panic() {
         let node = json!(["section", null, ["paragraph", null, "text"]]);
-        let result = render_node(&node, &empty_slugs());
+        let slugs = SlugMap::new();
+        let media = HashMap::new();
+        let ctx = empty_ctx(&slugs, &media);
+        let result = render_node(&node, &ctx);
         assert!(result.contains("text"), "Expected children rendered");
+    }
+
+    // REND-11: Image file link renders as <img> when in media_map
+    #[test]
+    fn test_image_file_link_renders_img() {
+        let mut media = HashMap::new();
+        media.insert(
+            "./images/puppy.png".to_string(),
+            "/media/NODEID/puppy.png".to_string(),
+        );
+        let slugs = SlugMap::new();
+        let ctx = RenderContext {
+            slug_map: &slugs,
+            media_map: &media,
+        };
+        let node = json!(["link", {"type": "file", "raw-link": "./images/puppy.png", "path": "./images/puppy.png"}]);
+        let result = render_node(&node, &ctx);
+        assert!(result.contains("<img"), "Expected <img> tag for image link");
+        assert!(
+            result.contains("src=\"/media/NODEID/puppy.png\""),
+            "Expected correct src"
+        );
+        assert!(
+            !result.contains("file-link"),
+            "Must not emit file-link span for image"
+        );
     }
 }
