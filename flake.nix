@@ -22,6 +22,7 @@
             nodejs
             just
             rsync
+            fswatch
           ];
           shellHook = ''
             echo "addisonbeck.com devshell"
