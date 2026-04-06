@@ -15,8 +15,12 @@ render:
 build: render
     cd site && npm run build
 
+# Kill any running preview servers
+kill-preview:
+    @pkill -f "astro preview" 2>/dev/null || true
+
 # Development: full build then preview server with export cache watcher
-dev:
+dev: kill-preview
     #!/usr/bin/env bash
     set -euo pipefail
     just build
