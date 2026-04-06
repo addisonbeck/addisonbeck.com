@@ -27,6 +27,9 @@ export default defineConfig({
         },
       },
     ],
+    preview: {
+      allowedHosts: ['bw'],
+    },
     build: {
       rollupOptions: {
         external: ['/pagefind/pagefind-ui.js'],
