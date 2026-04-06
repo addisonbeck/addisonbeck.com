@@ -3,39 +3,25 @@ on:
   push:
     branches: ['main']
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [18.x]
     steps:
-      - uses: actions/checkout@v3
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - name: Install Nix
+        uses: cachix/install-nix-action@v27
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run build
-      - name: deploy
-        uses: appleboy/scp-action@v0.1.3
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USERNAME }}
-          key: ${{ secrets.DEPLOY_KEY_PRI }}
-          source: dist/*
-          target: ${{ secrets.DEPLOY_PATH }}
-          strip_components: 1
-          overwrite: true
-      - run: npm run build:storybook
-      - name: deploy storybook
-        uses: appleboy/scp-action@v0.1.3
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USERNAME }}
-          key: ${{ secrets.DEPLOY_KEY_PRI }}
-          source: storybook-static/*
-          target: ${{ secrets.DEPLOY_PATH_STORYBOOK }}
-          strip_components: 1
-          overwrite: true
-
+          nix_path: nixpkgs=channel:nixos-unstable
+      - name: Build site
+        run: nix develop --command just build
+      - name: Deploy via rsync
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY_PRI }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$DEPLOY_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            site/dist/ \
+            ${{ secrets.DEPLOY_USERNAME }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}
