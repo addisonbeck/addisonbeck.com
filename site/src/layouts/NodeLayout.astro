@@ -1,6 +1,5 @@
 ---
 import BaseLayout from './BaseLayout.astro';
-import BacklinkPanel from '../components/BacklinkPanel.svelte';
 
 interface Props {
   title: string;
@@ -18,8 +17,38 @@ const { title, backlinks } = Astro.props;
     <article data-pagefind-body>
       <slot />
     </article>
-    <aside data-pagefind-ignore>
-      <BacklinkPanel backlinks={backlinks} client:idle />
-    </aside>
+    {backlinks.length > 0 && (
+      <aside data-pagefind-ignore>
+        <section class="backlinks">
+          <h2>Linked from</h2>
+          <ul>
+            {backlinks.map(link => (
+              <li><a href={`/${link.slug}`}>{link.title}</a></li>
+            ))}
+          </ul>
+        </section>
+      </aside>
+    )}
   </main>
 </BaseLayout>
+
+<style>
+  .backlinks {
+    margin-top: 3rem;
+    padding-top: 1rem;
+    border-top: 1px solid #ccc;
+  }
+  .backlinks h2 {
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #666;
+  }
+  .backlinks ul {
+    list-style: none;
+    padding: 0;
+  }
+  .backlinks li {
+    margin-bottom: 0.25rem;
+  }
+</style>
