@@ -11,4 +11,12 @@ export default defineConfig({
   ],
   // Build output directory
   outDir: './dist',
+  vite: {
+    build: {
+      rollupOptions: {
+        // pagefind-ui.js is generated at build time by astro-pagefind — not resolvable at bundle time
+        external: ['/pagefind/pagefind-ui.js'],
+      },
+    },
+  },
 });
