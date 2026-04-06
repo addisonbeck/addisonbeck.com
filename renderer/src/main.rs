@@ -1,5 +1,6 @@
 use clap::Parser;
 
+mod render;
 mod types;
 
 #[derive(Parser, Debug)]
@@ -26,14 +27,14 @@ fn main() {
             .unwrap_or_else(|e| panic!("Cannot read {}: {}", path, e));
         let node: types::NodeFile = serde_json::from_str(&content)
             .unwrap_or_else(|e| panic!("Cannot parse {}: {}", path, e));
-        eprintln!("[renderer] parsed node: {} ({})", node.title, node.id);
-        println!("TODO: render {}", uuid);
+
+        let slugs = render::SlugMap::new(); // empty for debug mode
+        let html = render::render_ast(&node.ast, &slugs);
+        println!("{html}");
         return;
     }
 
-    eprintln!("[renderer] input: {}", args.input);
-    eprintln!("[renderer] output: {}", args.output);
-    println!("TODO: full render pipeline");
+    eprintln!("[renderer] TODO: full render pipeline");
 }
 
 /// Expand ~ to the home directory
