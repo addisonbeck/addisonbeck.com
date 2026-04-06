@@ -30,7 +30,20 @@ fn render_node(node: &Value, slugs: &SlugMap) -> String {
             let element_type = arr[0].as_str().unwrap_or("");
             let props = &arr[1];
             let children = &arr[2..];
-            dispatch(element_type, props, children, slugs)
+            let html = dispatch(element_type, props, children, slugs);
+            // org-element stores trailing whitespace after inline elements in
+            // post-blank (e.g. the space between *bold* and the next word).
+            // Append it so inline runs don't collapse into each other.
+            let post_blank = props
+                .as_object()
+                .and_then(|obj| obj.get("post-blank"))
+                .and_then(|v| v.as_u64())
+                .unwrap_or(0) as usize;
+            if post_blank > 0 {
+                format!("{}{}", html, " ".repeat(post_blank))
+            } else {
+                html
+            }
         }
 
         // Unexpected value type — skip
@@ -413,6 +426,21 @@ mod tests {
         let ast = json!(["org-data", null, []]);
         let result = extract_last_modified(&ast);
         assert_eq!(result, "1970-01-01T00:00:00Z");
+    }
+
+    // REND-09: post-blank on inline elements emits trailing space
+    #[test]
+    fn test_post_blank_inline_spacing() {
+        // Simulates: *markup* and → bold has post-blank:1, text " and" follows
+        let node = json!(["paragraph", null,
+            ["bold", {"post-blank": 1}, "markup"],
+            "and"
+        ]);
+        let result = render_node(&node, &empty_slugs());
+        assert!(
+            result.contains("<strong>markup</strong> and"),
+            "Expected space between </strong> and following text, got: {result}"
+        );
     }
 
     // REND-10: Null properties on section must not panic

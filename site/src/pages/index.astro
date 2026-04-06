@@ -1,6 +1,7 @@
 ---
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
+import BaseLayout from '../layouts/BaseLayout.astro';
 
 const INDEX_PATH = resolve(process.cwd(), '../rendered/index.json');
 const index = JSON.parse(readFileSync(INDEX_PATH, 'utf-8'));
@@ -20,33 +21,25 @@ function formatDate(iso: string): string {
   return iso.slice(0, 10);
 }
 ---
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>addisonbeck.com</title>
-  </head>
-  <body>
-    <header>
-      <h1>addisonbeck.com</h1>
-      <nav>
-        <a href="/search">Search</a>
-      </nav>
-    </header>
-    <main>
-      <ul class="feed">
-        {sorted.map((node) => (
-          <li class="feed-item">
-            <a href={`/${node.slug}`}>{node.title}</a>
-            {formatDate(node.last_modified) && (
-              <time datetime={node.last_modified}>
-                {formatDate(node.last_modified)}
-              </time>
-            )}
-          </li>
-        ))}
-      </ul>
-    </main>
-  </body>
-</html>
+<BaseLayout title="addisonbeck.com">
+  <header>
+    <h1>addisonbeck.com</h1>
+    <nav>
+      <a href="/search">Search</a>
+    </nav>
+  </header>
+  <main>
+    <ul class="feed">
+      {sorted.map((node) => (
+        <li class="feed-item">
+          <a href={`/${node.slug}`}>{node.title}</a>
+          {formatDate(node.last_modified) && (
+            <time datetime={node.last_modified}>
+              {formatDate(node.last_modified)}
+            </time>
+          )}
+        </li>
+      ))}
+    </ul>
+  </main>
+</BaseLayout>
