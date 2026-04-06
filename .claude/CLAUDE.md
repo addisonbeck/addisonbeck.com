@@ -63,10 +63,14 @@ website-redesign/
 
 ### Available Commands
 
+All `just` commands must be run from inside `nix develop`. The devshell provides the correct Rust, Node.js, and tooling versions — `just` is not meaningful outside it.
+
 ```bash
-just render   # Run Rust renderer: reads cache, writes rendered/
-just build    # Full build: render + Astro build + Pagefind index
-just dev      # Watch mode: re-renders on cache changes, serves Astro dev server
+just render        # Run Rust renderer: reads cache, writes rendered/
+just build         # Full build: render + Astro build + Pagefind index
+just dev           # Watch mode: re-renders on cache changes, serves Astro dev server
+just update-deps   # Refresh lock files to latest compatible versions (no major bumps)
+just upgrade-deps  # Upgrade all deps to absolute latest, including major version bumps
 ```
 
 ### GitHub Actions Secrets
@@ -88,6 +92,7 @@ The deploy workflow requires exactly these four secrets — do not rename them:
 - **Do not change GitHub Actions secret names** — the workflow references `DEPLOY_HOST`, `DEPLOY_USERNAME`, `DEPLOY_KEY_PRI`, and `DEPLOY_PATH` exactly.
 - **Do not use pnpm** — this project uses npm. Using pnpm will create a `pnpm-lock.yaml` and break the Nix build.
 - **Do not run builds outside `nix develop`** — the Rust toolchain version is pinned and must come from the Nix shell.
+- **Do not call `nix develop --command` from within a just recipe** — just recipes already execute inside the devshell when invoked correctly. Wrapping them in `nix develop --command` spawns a nested shell unnecessarily. The only valid use of `nix develop --command just ...` is from outside the devshell, e.g. in CI.
 
 ## Data Models
 

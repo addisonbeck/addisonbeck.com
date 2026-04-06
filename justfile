@@ -15,6 +15,18 @@ render:
 build: render
     cd site && npm run build
 
+# Update all dependencies: nix flake, npm, cargo
+update-deps:
+    nix flake update
+    cd site && npm upgrade --save-exact && npm install
+    cargo update --manifest-path renderer/Cargo.toml
+
+# Upgrade all dependencies to absolute latest, including major version bumps
+upgrade-deps:
+    nix flake update
+    cd site && npx --yes npm-check-updates --upgrade && npm install
+    cargo update --manifest-path renderer/Cargo.toml
+
 # Kill any running preview servers
 kill-preview:
     @pkill -f "astro preview" 2>/dev/null || true

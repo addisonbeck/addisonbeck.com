@@ -19,7 +19,7 @@
           name = "addisonbeck-devshell";
           buildInputs = with pkgs; [
             rustToolchain
-            nodejs
+            nodejs_24
             just
             rsync
             fswatch
