@@ -12,24 +12,26 @@ The org-roam export cache is committed to `export-cache/` in this repository. Th
 
 ```mermaid
 graph TD
-    A[Emacs batch export] --> B[~/.cache/org-roam-export/]
-    B --> C[just render]
-    C --> D[Rust renderer binary]
-    D --> E[rendered/index.json]
-    D --> F[rendered/alias_map.json]
-    D --> G[rendered/*.html]
-    E --> H[just build]
-    F --> H
-    G --> H
-    H --> I[Astro static build]
-    I --> J[site/dist/]
-    J --> K[Pagefind index]
-    K --> L[site/dist/pagefind/]
-    L --> M[rsync deploy]
+    A[scripts/org-roam-export.el] --> B[Emacs batch export]
+    B --> C[~/.cache/org-roam-export/]
+    C --> D[just render]
+    D --> E[Rust renderer binary]
+    E --> F[rendered/index.json]
+    E --> G[rendered/alias_map.json]
+    E --> H[rendered/*.html]
+    F --> I[just build]
+    G --> I
+    H --> I
+    I --> J[Astro static build]
+    J --> K[site/dist/]
+    K --> L[Pagefind index]
+    L --> M[site/dist/pagefind/]
+    M --> N[rsync deploy]
 ```
 
 ### Build Pipeline
 
+0. `scripts/org-roam-export.el` — the Emacs Lisp serializer that drives the export. Run via the `org-roam-export` shell binary (provided by the nix system config, which consumes this script as a flake package). Reads the org-roam database and writes sharded JSON to `~/.cache/org-roam-export/`. This is the **upstream data source** for everything that follows.
 1. `nix develop` — enters the Nix devshell; automatically syncs `~/.cache/org-roam-export/` → `export-cache/`
 2. `just render` — runs `cargo run --release` in `renderer/`, reads `export-cache/` and writes `rendered/`
 3. `just build` — runs `just render` then `npm run build` in `site/`, which produces `site/dist/` and runs Pagefind indexing
@@ -40,7 +42,9 @@ graph TD
 
 ```
 website-redesign/
-├── renderer/           # Rust crate: org-element AST → HTML fragments
+├── scripts/
+│   └── org-roam-export.el  # Emacs Lisp serializer: org-roam DB → sharded JSON (upstream data source for the renderer)
+├── renderer/           # Rust crate: org-element AST JSON → HTML fragments
 ├── site/               # Astro project: static site generation
 ├── export-cache/       # Committed org-roam export data (synced from ~/.cache/org-roam-export/ by devshell)
 ├── rendered/           # Build artifact (gitignored): renderer output
@@ -49,7 +53,7 @@ website-redesign/
 │       └── deploy.yml  # CI/CD: Nix build + rsync deploy
 ├── rust-toolchain.toml # Pins Rust 1.94.1 stable
 ├── justfile            # Build orchestration commands
-└── flake.nix           # Nix devshell definition
+└── flake.nix           # Nix devshell + org-roam-export-el package output
 ```
 
 ## Stack Best Practices

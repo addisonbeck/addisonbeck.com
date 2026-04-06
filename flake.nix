@@ -15,6 +15,12 @@
         pkgs = import nixpkgs { inherit system overlays; };
         rustToolchain = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
       in {
+        packages.org-roam-export-el = pkgs.stdenv.mkDerivation {
+          name = "org-roam-export-el";
+          src = ./scripts/org-roam-export.el;
+          phases = [ "installPhase" ];
+          installPhase = "cp $src $out";
+        };
         devShells.default = pkgs.mkShell {
           name = "addisonbeck-devshell";
           buildInputs = with pkgs; [
