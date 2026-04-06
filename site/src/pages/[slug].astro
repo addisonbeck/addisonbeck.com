@@ -1,0 +1,54 @@
+---
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
+import NodeLayout from '../layouts/NodeLayout.astro';
+
+// index.json is relative to the project root (one level up from site/)
+const INDEX_PATH = resolve(process.cwd(), '../rendered/index.json');
+const ALIAS_MAP_PATH = resolve(process.cwd(), '../rendered/alias_map.json');
+
+export async function getStaticPaths() {
+  const INDEX_PATH = resolve(process.cwd(), '../rendered/index.json');
+  const ALIAS_MAP_PATH = resolve(process.cwd(), '../rendered/alias_map.json');
+  const index = JSON.parse(readFileSync(INDEX_PATH, 'utf-8'));
+  const aliasMap = JSON.parse(readFileSync(ALIAS_MAP_PATH, 'utf-8'));
+
+  const paths = [];
+
+  // One path per slug in alias_map (covers title slugs, alias slugs, UUID direct)
+  for (const [slug, nodeId] of Object.entries(aliasMap)) {
+    paths.push({
+      params: { slug },
+      props: { nodeId },
+    });
+  }
+
+  return paths;
+}
+
+const { slug } = Astro.params;
+const { nodeId } = Astro.props;
+
+const INDEX_DATA = JSON.parse(readFileSync(INDEX_PATH, 'utf-8'));
+const nodeEntry = INDEX_DATA.find((n: { id: string }) => n.id === nodeId);
+
+if (!nodeEntry) {
+  throw new Error(`Node not found in index: ${nodeId}`);
+}
+
+// Read pre-rendered HTML fragment
+const htmlPath = resolve(process.cwd(), `../rendered/${nodeId}.html`);
+const htmlContent = readFileSync(htmlPath, 'utf-8');
+
+// Resolve backlink IDs to title + slug entries
+const backlinks = (nodeEntry.backlinks as string[]).map((backlinkId: string) => {
+  const entry = INDEX_DATA.find((n: { id: string }) => n.id === backlinkId);
+  return entry
+    ? { id: backlinkId, title: entry.title, slug: entry.slug }
+    : { id: backlinkId, title: backlinkId, slug: backlinkId };
+});
+---
+
+<NodeLayout title={nodeEntry.title} backlinks={backlinks}>
+  <div set:html={htmlContent} />
+</NodeLayout>
