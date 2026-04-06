@@ -1,0 +1,40 @@
+#+TITLE: addisonbeck.com
+#+AUTHOR: Addison Beck
+
+Static site rendering Addison's org-roam second brain as a public web reader. A Rust binary converts org-element AST JSON exports into HTML fragments; Astro builds the static site with backlink navigation and full-text search.
+
+* Prerequisites
+
+- [[https://nixos.org/download][Nix]] with flakes enabled
+- org-roam export cache at =~/.cache/org-roam-export/= (populated by a separate Emacs batch export job)
+
+* Quick Start
+
+#+begin_src bash
+nix develop       # Enter devshell (provides Rust, Node.js, just, rsync)
+just build        # Render org-roam nodes + build Astro site + index with Pagefind
+just dev          # Watch mode: re-render on changes + Astro dev server
+#+end_src
+
+* Project Structure
+
+#+begin_example
+website-redesign/
+├── renderer/           Rust crate: org-element AST → HTML fragments
+├── site/               Astro project: static site generation
+├── rendered/           Build artifact (gitignored): renderer output
+├── .github/workflows/  GitHub Actions CI/CD
+├── rust-toolchain.toml Pins Rust 1.94.1 stable
+├── justfile            Build orchestration
+└── flake.nix           Nix devshell definition
+#+end_example
+
+* Deployment
+
+Pushing to =main= triggers GitHub Actions:
+
+1. Nix devshell enters automatically
+2. =just build= runs the full pipeline (render → Astro build → Pagefind)
+3. =rsync= deploys =site/dist/= to the configured Mail-in-a-Box server via SSH
+
+Required GitHub Actions secrets: =DEPLOY_HOST=, =DEPLOY_USERNAME=, =DEPLOY_KEY_PRI=, =DEPLOY_PATH=.
