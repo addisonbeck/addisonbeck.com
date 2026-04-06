@@ -1,4 +1,5 @@
 use clap::Parser;
+use image::ImageReader;
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
@@ -28,6 +29,9 @@ struct Args {
 }
 
 const IMAGE_EXTS: &[&str] = &["png", "jpg", "jpeg", "gif", "svg", "webp", "avif"];
+
+/// Extensions converted to WebP. SVG and GIF are passed through unchanged.
+const WEBP_CONVERT_EXTS: &[&str] = &["png", "jpg", "jpeg", "avif", "webp"];
 
 /// Walk AST and collect all file: link paths that have an image extension.
 fn collect_image_paths(ast: &serde_json::Value) -> Vec<String> {
@@ -138,10 +142,87 @@ fn main() {
                     fs::create_dir_all(&dest_dir).unwrap_or_else(|e| {
                         panic!("Cannot create media dest dir {}: {}", dest_dir, e)
                     });
-                    let dest = format!("{}/{}", dest_dir, filename);
-                    fs::copy(&src, &dest)
-                        .unwrap_or_else(|e| panic!("Cannot copy media {} -> {}: {}", src, dest, e));
-                    let web_url = format!("/media/{}/{}", node.id, filename);
+
+                    let src_ext = Path::new(filename)
+                        .extension()
+                        .and_then(|e| e.to_str())
+                        .map(|e| e.to_lowercase())
+                        .unwrap_or_default();
+
+                    let (dest_filename, web_url) = if WEBP_CONVERT_EXTS.contains(&src_ext.as_str())
+                    {
+                        let stem = Path::new(filename)
+                            .file_stem()
+                            .and_then(|s| s.to_str())
+                            .unwrap_or(filename);
+                        let webp_name = format!("{stem}.webp");
+                        let url = format!("/media/{}/{}", node.id, webp_name);
+                        (webp_name, url)
+                    } else {
+                        // SVG, GIF, and unknown formats: copy verbatim
+                        (
+                            filename.to_string(),
+                            format!("/media/{}/{}", node.id, filename),
+                        )
+                    };
+
+                    let dest = format!("{}/{}", dest_dir, dest_filename);
+
+                    if dest_filename.ends_with(".webp") && !src_ext.eq("webp") {
+                        // Decode source and re-encode as WebP
+                        match ImageReader::open(&src).and_then(|r| r.with_guessed_format()) {
+                            Ok(reader) => match reader.decode() {
+                                Ok(img) => {
+                                    let rgba = img.to_rgba8();
+                                    let (w, h) = rgba.dimensions();
+                                    match webp::Encoder::from_rgba(rgba.as_raw(), w, h).encode(85.0)
+                                    {
+                                        webp_data => {
+                                            fs::write(&dest, &*webp_data).unwrap_or_else(|e| {
+                                                panic!("Cannot write WebP {}: {}", dest, e)
+                                            });
+                                        }
+                                    }
+                                }
+                                Err(e) => {
+                                    eprintln!("[renderer] WARNING: cannot decode {src}: {e}, copying verbatim");
+                                    let verbatim_dest = format!("{}/{}", dest_dir, filename);
+                                    fs::copy(&src, &verbatim_dest).unwrap_or_else(|e| {
+                                        panic!(
+                                            "Cannot copy media {} -> {}: {}",
+                                            src, verbatim_dest, e
+                                        )
+                                    });
+                                    // Use original filename in URL since WebP conversion failed
+                                    media_map.insert(
+                                        img_path.clone(),
+                                        format!("/media/{}/{}", node.id, filename),
+                                    );
+                                    continue;
+                                }
+                            },
+                            Err(e) => {
+                                eprintln!(
+                                    "[renderer] WARNING: cannot open {src}: {e}, copying verbatim"
+                                );
+                                let verbatim_dest = format!("{}/{}", dest_dir, filename);
+                                fs::copy(&src, &verbatim_dest).unwrap_or_else(|e| {
+                                    panic!("Cannot copy media {} -> {}: {}", src, verbatim_dest, e)
+                                });
+                                media_map.insert(
+                                    img_path.clone(),
+                                    format!("/media/{}/{}", node.id, filename),
+                                );
+                                continue;
+                            }
+                        }
+                    } else {
+                        // Pass through verbatim (SVG, GIF, already-WebP, unknown)
+                        fs::copy(&src, &dest).unwrap_or_else(|e| {
+                            panic!("Cannot copy media {} -> {}: {}", src, dest, e)
+                        });
+                    }
+
                     media_map.insert(img_path.clone(), web_url);
                 }
             }

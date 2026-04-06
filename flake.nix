@@ -29,6 +29,7 @@
             just
             rsync
             fswatch
+            libwebp
           ];
           shellHook = ''
             echo "addisonbeck.com devshell"
