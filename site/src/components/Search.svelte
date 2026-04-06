@@ -4,9 +4,9 @@
   let searchEl: HTMLElement;
 
   onMount(async () => {
-    // @ts-ignore — pagefind loaded at runtime from dist/pagefind/
-    const { PagefindUI } = await import('/pagefind/pagefind-ui.js');
-    new PagefindUI({
+    await import('/pagefind/pagefind-ui.js');
+    // pagefind-ui.js is an IIFE that attaches PagefindUI to window
+    new (window as any).PagefindUI({
       element: searchEl,
       showSubResults: true,
     });

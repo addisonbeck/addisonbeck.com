@@ -19,7 +19,7 @@ export default defineConfig({
         },
         load(id) {
           if (id === '/pagefind/pagefind-ui.js') {
-            return 'export const PagefindUI = class { constructor() { console.warn("Pagefind not available in dev mode — run `just build` first to generate the search index."); } };';
+            return 'window.PagefindUI = class { constructor() { console.warn("Pagefind not available in dev mode — run `just build` first to generate the search index."); } };';
           }
           if (id === '/pagefind/pagefind-ui.css') {
             return '';
