@@ -20,7 +20,7 @@ dev:
     #!/usr/bin/env bash
     set -euo pipefail
     just build
-    cd site && npm run preview &
+    cd site && npm run preview -- --host &
     PREVIEW_PID=$!
     trap "kill $PREVIEW_PID 2>/dev/null" EXIT
     echo "Watching ~/.cache/org-roam-export for changes (Ctrl+C to stop)..."
