@@ -13,7 +13,7 @@ render:
 
 # Build full site: render then Astro build
 build: render
-    cd site && npm run build
+    cd site && npm install && npm run build
 
 # Update all dependencies: nix flake, npm, cargo
 update-deps:
