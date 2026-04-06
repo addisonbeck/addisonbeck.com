@@ -133,13 +133,19 @@ fn dispatch(element_type: &str, props: &Value, children: &[Value], slugs: &SlugM
         "subscript" => format!("_{}", render_children(children, slugs)),
         "superscript" => format!("^{}", render_children(children, slugs)),
         "entity" => {
-            // Use HTML entity if available, fall back to name
-            props
+            // Use HTML entity if available, fall back to name.
+            // Only pass through values that look like proper HTML entities
+            // (&foo; or &#123;) to prevent XSS via poisoned export cache.
+            let raw = props
                 .get("html")
                 .and_then(|v| v.as_str())
                 .or_else(|| props.get("name").and_then(|v| v.as_str()))
-                .unwrap_or("")
-                .to_string()
+                .unwrap_or("");
+            if raw.starts_with('&') && raw.ends_with(';') {
+                raw.to_string()
+            } else {
+                html_escape(raw)
+            }
         }
         "line-break" => "<br>\n".to_string(),
         "horizontal-rule" => "<hr>\n".to_string(),
