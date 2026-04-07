@@ -181,7 +181,7 @@ Requires Emacs 27.1+ for `proper-list-p'."
                                   (message "  [diag] step 2b: serializing")
                                   (org-roam-export--serialize-ast ast))))
                    (message "  [diag] step 2c: copying media")
-                   (let ((image-exts '(".png" ".jpg" ".jpeg" ".gif" ".svg" ".webp" ".avif"))
+                   (let ((image-exts '(".png" ".jpg" ".jpeg" ".gif" ".svg" ".webp" ".avif" ".pdf"))
                          (media-dir (expand-file-name (concat "media/" id) output-dir))
                          (org-dir (file-name-directory file)))
                      (org-element-map ast 'link
