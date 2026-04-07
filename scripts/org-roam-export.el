@@ -208,9 +208,11 @@ Requires Emacs 27.1+ for `proper-list-p'."
                  (linked-from
                   (mapcar #'car
                           (org-roam-db-query
-                           [:select [source] :from links
-                            :where (= dest $s1)
-                            :and   (= type "id")]
+                           [:select [links:source] :from links
+                            :inner-join tags :on (= links:source tags:node_id)
+                            :where (= links:dest $s1)
+                            :and   (= links:type "id")
+                            :and   (= tags:tag "public")]
                            id))))
             (message "  [diag] step 4: encoding json")
             (let ((doc `(("id"          . ,id)
