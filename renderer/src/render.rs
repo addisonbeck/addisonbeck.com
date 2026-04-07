@@ -244,7 +244,7 @@ fn render_link(props: &Value, children: &[Value], ctx: &RenderContext) -> String
         "file" => {
             if let Some(web_url) = ctx.media_map.get(path) {
                 let alt = if children.is_empty() {
-                    html_escape(path.split('/').last().unwrap_or(path))
+                    html_escape(path.split('/').next_back().unwrap_or(path))
                 } else {
                     render_children(children, ctx)
                 };
@@ -414,8 +414,7 @@ fn highlight_src_block(lang: &str, code: &str, ss: &SyntaxSet) -> String {
         }
     };
 
-    let mut generator =
-        ClassedHTMLGenerator::new_with_class_style(syntax, ss, ClassStyle::Spaced);
+    let mut generator = ClassedHTMLGenerator::new_with_class_style(syntax, ss, ClassStyle::Spaced);
 
     for line in LinesWithEndings::from(code) {
         let _ = generator.parse_html_for_line_which_includes_newline(line);
