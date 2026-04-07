@@ -1,0 +1,122 @@
+/* =============================================================================
+   Syntax highlighting -- Gruvbox theme
+   Token classes emitted by syntect ClassStyle::Spaced.
+   Scoped to pre code to avoid collisions with prose styles.
+   ============================================================================= */
+
+/* Comments */
+pre code .comment {
+  color: var(--gray);
+  font-style: italic;
+}
+
+/* Keywords: fn, let, if, else, for, while, return, etc. */
+pre code .keyword {
+  color: var(--orange);
+}
+
+/* Storage: type annotations, modifiers, fn keyword */
+pre code .storage {
+  color: var(--orange);
+}
+
+/* Strings: double-quoted, single-quoted, raw, template */
+pre code .string {
+  color: var(--green);
+}
+
+/* Escape sequences inside strings */
+pre code .constant.character.escape {
+  color: var(--aqua);
+}
+
+/* Numeric literals */
+pre code .constant.numeric {
+  color: var(--purple);
+}
+
+/* Language constants: true, false, nil, null, None, etc. */
+pre code .constant.language {
+  color: var(--purple);
+}
+
+/* Other constants */
+pre code .constant {
+  color: var(--purple);
+}
+
+/* Function/method definitions */
+pre code .entity.name.function {
+  color: var(--yellow);
+}
+
+/* Type names, class names, struct names */
+pre code .entity.name.type {
+  color: var(--yellow);
+}
+
+/* Module/namespace names */
+pre code .entity.name.module,
+pre code .entity.name.namespace {
+  color: var(--fg2);
+}
+
+/* Other entity names */
+pre code .entity.name {
+  color: var(--yellow);
+}
+
+/* Inherited types */
+pre code .entity.other.inherited-class {
+  color: var(--aqua);
+}
+
+/* Built-in functions, library functions */
+pre code .support.function {
+  color: var(--aqua);
+}
+
+/* Built-in types */
+pre code .support.type {
+  color: var(--yellow);
+}
+
+/* Built-in constants */
+pre code .support.constant {
+  color: var(--purple);
+}
+
+/* Variables: keep base color, differentiate parameters */
+pre code .variable {
+  color: var(--fg);
+}
+
+pre code .variable.parameter {
+  color: var(--fg2);
+}
+
+/* Operators: +, -, =, ->, etc. */
+pre code .keyword.operator {
+  color: var(--aqua);
+}
+
+/* Punctuation: subtle, not distracting */
+pre code .punctuation {
+  color: var(--fg3);
+}
+
+/* Preprocessor / meta directives */
+pre code .meta.preprocessor {
+  color: var(--aqua);
+}
+
+/* Attributes / annotations (e.g. #[derive(...)], @decorator) */
+pre code .meta.annotation,
+pre code .punctuation.definition.annotation {
+  color: var(--aqua);
+}
+
+/* Invalid / error tokens */
+pre code .invalid {
+  color: var(--red);
+}

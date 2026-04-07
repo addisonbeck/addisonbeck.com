@@ -1,5 +1,8 @@
 use serde_json::Value;
 use std::collections::HashMap;
+use syntect::html::{ClassStyle, ClassedHTMLGenerator};
+use syntect::parsing::SyntaxSet;
+use syntect::util::LinesWithEndings;
 
 /// Maps node UUID -> canonical URL slug
 pub type SlugMap = HashMap<String, String>;
@@ -8,6 +11,7 @@ pub type SlugMap = HashMap<String, String>;
 pub struct RenderContext<'a> {
     pub slug_map: &'a SlugMap,
     pub media_map: &'a HashMap<String, String>,
+    pub syntax_set: &'a SyntaxSet,
 }
 
 /// Escape HTML special characters
@@ -128,12 +132,8 @@ fn dispatch(element_type: &str, props: &Value, children: &[Value], ctx: &RenderC
         "src-block" => {
             let lang = props.get("language").and_then(|v| v.as_str()).unwrap_or("");
             let value = props.get("value").and_then(|v| v.as_str()).unwrap_or("");
-            let escaped = html_escape(value);
-            if lang.is_empty() {
-                format!("<pre><code>{escaped}</code></pre>\n")
-            } else {
-                format!("<pre><code class=\"language-{lang}\">{escaped}</code></pre>\n")
-            }
+            let value = value.trim_end_matches('\n');
+            highlight_src_block(lang, value, ctx.syntax_set)
         }
         "example-block" | "fixed-width" => {
             let value = props.get("value").and_then(|v| v.as_str()).unwrap_or("");
@@ -351,18 +351,95 @@ fn parse_org_timestamp(s: &str) -> Option<String> {
     }
 }
 
+/// Map org-mode language identifiers to syntect syntax names.
+/// Returns None if the language should fall back to plain rendering.
+fn normalize_language(lang: &str) -> Option<&'static str> {
+    match lang.to_lowercase().as_str() {
+        "emacs-lisp" | "elisp" => Some("Lisp"),
+        "sh" | "shell" | "bash" | "zsh" | "fish" => Some("Bash"),
+        "js" | "javascript" => Some("JavaScript"),
+        "ts" | "typescript" => Some("TypeScript"),
+        "py" | "python" => Some("Python"),
+        "rs" | "rust" => Some("Rust"),
+        "rb" | "ruby" => Some("Ruby"),
+        "hs" | "haskell" => Some("Haskell"),
+        "css" => Some("CSS"),
+        "html" | "htm" => Some("HTML"),
+        "xml" => Some("XML"),
+        "json" => Some("JSON"),
+        "yaml" | "yml" => Some("YAML"),
+        "toml" => Some("TOML"),
+        "sql" => Some("SQL"),
+        "c" => Some("C"),
+        "cpp" | "c++" => Some("C++"),
+        "go" => Some("Go"),
+        "java" => Some("Java"),
+        "kotlin" | "kt" => Some("Kotlin"),
+        "scala" => Some("Scala"),
+        "swift" => Some("Swift"),
+        "r" => Some("R"),
+        "lua" => Some("Lua"),
+        "perl" | "pl" => Some("Perl"),
+        "tex" | "latex" => Some("LaTeX"),
+        "makefile" | "make" => Some("Makefile"),
+        "diff" | "patch" => Some("Diff"),
+        "ini" | "cfg" | "conf" => Some("INI"),
+        "markdown" | "md" => Some("Markdown"),
+        "nix" => Some("Nix"),
+        // text, org, and other unknown languages fall back to plain
+        _ => None,
+    }
+}
+
+/// Render a src-block with syntax highlighting via syntect.
+/// Falls back to plain HTML-escaped rendering if the language is unknown.
+fn highlight_src_block(lang: &str, code: &str, ss: &SyntaxSet) -> String {
+    // Try to find syntax; fall back to plain if unknown or empty
+    let syntax = normalize_language(lang)
+        .and_then(|name| ss.find_syntax_by_name(name))
+        .or_else(|| {
+            if lang.is_empty() {
+                None
+            } else {
+                ss.find_syntax_by_token(lang)
+            }
+        });
+
+    let Some(syntax) = syntax else {
+        let escaped = html_escape(code);
+        if lang.is_empty() {
+            return format!("<pre><code>{escaped}</code></pre>\n");
+        } else {
+            return format!("<pre><code class=\"language-{lang}\">{escaped}</code></pre>\n");
+        }
+    };
+
+    let mut generator =
+        ClassedHTMLGenerator::new_with_class_style(syntax, ss, ClassStyle::Spaced);
+
+    for line in LinesWithEndings::from(code) {
+        let _ = generator.parse_html_for_line_which_includes_newline(line);
+    }
+
+    let highlighted = generator.finalize();
+    format!("<pre><code class=\"language-{lang}\">{highlighted}</code></pre>\n")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use serde_json::json;
+    use syntect::parsing::SyntaxSet;
 
     fn empty_ctx<'a>(
         slug_map: &'a SlugMap,
         media_map: &'a HashMap<String, String>,
+        syntax_set: &'a SyntaxSet,
     ) -> RenderContext<'a> {
         RenderContext {
             slug_map,
             media_map,
+            syntax_set,
         }
     }
 
@@ -372,7 +449,8 @@ mod tests {
         let node = json!(["paragraph", null, "Hello world"]);
         let slugs = SlugMap::new();
         let media = HashMap::new();
-        let ctx = empty_ctx(&slugs, &media);
+        let ss = SyntaxSet::load_defaults_newlines();
+        let ctx = empty_ctx(&slugs, &media, &ss);
         let result = render_node(&node, &ctx);
         assert!(result.contains("<p>"), "Expected <p> tag");
         assert!(result.contains("Hello world"), "Expected content");
@@ -384,7 +462,8 @@ mod tests {
         let node = json!(["headline", {"level": 8, "title": ["Deep heading"]}, []]);
         let slugs = SlugMap::new();
         let media = HashMap::new();
-        let ctx = empty_ctx(&slugs, &media);
+        let ss = SyntaxSet::load_defaults_newlines();
+        let ctx = empty_ctx(&slugs, &media, &ss);
         let result = render_node(&node, &ctx);
         assert!(result.contains("<h6>"), "Expected level clamped to h6");
         assert!(!result.contains("<h8>"), "Must not emit h8");
@@ -396,11 +475,12 @@ mod tests {
         let node = json!(["src-block", {"language": "rust", "value": "fn main() {}"}, ]);
         let slugs = SlugMap::new();
         let media = HashMap::new();
-        let ctx = empty_ctx(&slugs, &media);
+        let ss = SyntaxSet::load_defaults_newlines();
+        let ctx = empty_ctx(&slugs, &media, &ss);
         let result = render_node(&node, &ctx);
         assert!(result.contains("language-rust"), "Expected language class");
         assert!(result.contains("<pre>"), "Expected pre tag");
-        assert!(result.contains("fn main()"), "Expected code content");
+        assert!(result.contains("main"), "Expected code content");
     }
 
     // REND-04: Render internal id link resolves via slug map
@@ -413,7 +493,8 @@ mod tests {
         );
         let node = json!(["link", {"type": "id", "raw-link": "id:ABCD1234-0000-0000-0000-000000000000", "path": "ABCD1234-0000-0000-0000-000000000000"}, "My Node"]);
         let media = HashMap::new();
-        let ctx = empty_ctx(&slugs, &media);
+        let ss = SyntaxSet::load_defaults_newlines();
+        let ctx = empty_ctx(&slugs, &media, &ss);
         let result = render_node(&node, &ctx);
         assert!(
             result.contains("href=\"/my-node\""),
@@ -427,7 +508,8 @@ mod tests {
         let node = json!(["link", {"type": "https", "raw-link": "https://example.com", "path": "//example.com"}, "Example"]);
         let slugs = SlugMap::new();
         let media = HashMap::new();
-        let ctx = empty_ctx(&slugs, &media);
+        let ss = SyntaxSet::load_defaults_newlines();
+        let ctx = empty_ctx(&slugs, &media, &ss);
         let result = render_node(&node, &ctx);
         assert!(
             result.contains("href=\"https://example.com\""),
@@ -441,7 +523,8 @@ mod tests {
         let node = json!(["link", {"type": "file", "raw-link": "file:/home/user/doc.org", "path": "/home/user/doc.org"}, "doc.org"]);
         let slugs = SlugMap::new();
         let media = HashMap::new();
-        let ctx = empty_ctx(&slugs, &media);
+        let ss = SyntaxSet::load_defaults_newlines();
+        let ctx = empty_ctx(&slugs, &media, &ss);
         let result = render_node(&node, &ctx);
         assert!(
             !result.contains("<a href"),
@@ -476,7 +559,8 @@ mod tests {
         ]);
         let slugs = SlugMap::new();
         let media = HashMap::new();
-        let ctx = empty_ctx(&slugs, &media);
+        let ss = SyntaxSet::load_defaults_newlines();
+        let ctx = empty_ctx(&slugs, &media, &ss);
         let result = render_node(&node, &ctx);
         assert!(
             result.contains("<strong>markup</strong> and"),
@@ -490,7 +574,8 @@ mod tests {
         let node = json!(["section", null, ["paragraph", null, "text"]]);
         let slugs = SlugMap::new();
         let media = HashMap::new();
-        let ctx = empty_ctx(&slugs, &media);
+        let ss = SyntaxSet::load_defaults_newlines();
+        let ctx = empty_ctx(&slugs, &media, &ss);
         let result = render_node(&node, &ctx);
         assert!(result.contains("text"), "Expected children rendered");
     }
@@ -504,9 +589,11 @@ mod tests {
             "/media/NODEID/puppy.png".to_string(),
         );
         let slugs = SlugMap::new();
+        let ss = SyntaxSet::load_defaults_newlines();
         let ctx = RenderContext {
             slug_map: &slugs,
             media_map: &media,
+            syntax_set: &ss,
         };
         let node = json!(["link", {"type": "file", "raw-link": "./images/puppy.png", "path": "./images/puppy.png"}]);
         let result = render_node(&node, &ctx);

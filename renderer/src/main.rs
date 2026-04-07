@@ -3,7 +3,6 @@ use image::ImageReader;
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
-
 mod render;
 mod slug;
 mod types;
@@ -68,6 +67,16 @@ fn collect_image_paths_inner(node: &serde_json::Value, out: &mut Vec<String>) {
 fn main() {
     let args = Args::parse();
     let input_dir = expand_tilde(&args.input);
+    let syntax_set = {
+        let mut builder = syntect::parsing::SyntaxSet::load_defaults_newlines().into_builder();
+        let extra = concat!(env!("CARGO_MANIFEST_DIR"), "/syntaxes");
+        if std::path::Path::new(extra).exists() {
+            builder.add_from_folder(extra, true).unwrap_or_else(|e| {
+                eprintln!("[renderer] WARNING: could not load extra syntaxes from {extra}: {e}");
+            });
+        }
+        builder.build()
+    };
 
     // Single-node debug mode
     if let Some(uuid) = &args.node {
@@ -77,6 +86,7 @@ fn main() {
         let ctx = render::RenderContext {
             slug_map: &slugs,
             media_map: &media_map,
+            syntax_set: &syntax_set,
         };
         let html = render::render_ast(&node.ast, &ctx);
         println!("{html}");
@@ -230,6 +240,7 @@ fn main() {
         let ctx = render::RenderContext {
             slug_map: &slug_map,
             media_map: &media_map,
+            syntax_set: &syntax_set,
         };
         // Render HTML fragment
         let html = render::render_ast(&node.ast, &ctx);
