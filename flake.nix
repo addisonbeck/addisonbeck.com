@@ -30,6 +30,7 @@
             rsync
             fswatch
             libwebp
+            poppler_utils
           ];
           shellHook = ''
             echo "addisonbeck.com devshell"
