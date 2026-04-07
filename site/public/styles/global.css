@@ -107,10 +107,10 @@ html {
 body {
   background-color: var(--bg);
   color: var(--fg);
-  font-family: ui-monospace, "SFMono-Regular", "Cascadia Code", "Source Code Pro", Menlo, Consolas, monospace;
+  font-family: ui-serif, Georgia, "Times New Roman", serif;
   line-height: 1.6;
   padding: 2rem 1rem;
-  max-width: 72ch;
+  max-width: 65ch;
   margin: 0 auto;
 }
 
@@ -184,7 +184,7 @@ em     { color: var(--fg2); }
    ============================================================================= */
 
 code {
-  font-family: inherit;
+  font-family: ui-monospace, "SFMono-Regular", "Cascadia Code", "Source Code Pro", Menlo, Consolas, monospace;
   font-size: 0.9em;
   background-color: var(--bg1);
   color: var(--green);
@@ -199,6 +199,10 @@ pre {
   overflow-x: auto;
   margin-bottom: 1rem;
   line-height: 1.4;
+  width: min(90vw, 80ch);
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 pre code {
@@ -366,7 +370,7 @@ article {
   --pagefind-ui-tag:           var(--bg2);
   --pagefind-ui-border-width:  1px;
   --pagefind-ui-border-radius: 2px;
-  --pagefind-ui-font:          ui-monospace, "SFMono-Regular", "Cascadia Code", "Source Code Pro", Menlo, Consolas, monospace;
+  --pagefind-ui-font:          ui-serif, Georgia, "Times New Roman", serif;
 }
 
 .search-widget .pagefind-ui__search-input:focus,
