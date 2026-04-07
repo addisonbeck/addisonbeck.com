@@ -9,10 +9,10 @@ interface Props {
 const { title, backlinks } = Astro.props;
 ---
 <BaseLayout title={title}>
-  <nav data-pagefind-ignore>
+  <nav aria-label="breadcrumb" data-pagefind-ignore>
     <a href="/">← Home</a>
   </nav>
-  <main>
+  <main id="main">
     <h1 class="page-title">{title}</h1>
     <article data-pagefind-body>
       <slot />
@@ -36,13 +36,13 @@ const { title, backlinks } = Astro.props;
   .backlinks {
     margin-top: 3rem;
     padding-top: 1rem;
-    border-top: 1px solid #ccc;
+    border-top: 1px solid var(--bg3);
   }
   .backlinks h2 {
     font-size: 0.875rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: #666;
+    color: var(--fg3);
   }
   .backlinks ul {
     list-style: none;

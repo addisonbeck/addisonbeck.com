@@ -16,7 +16,7 @@
   --red:   #fb4934;
   --green: #b8bb26;
   --yellow:#fabd2f;
-  --blue:  #83a598;
+  --blue:  #a0c0b4;
   --purple:#d3869b;
   --aqua:  #8ec07c;
   --orange:#fe8019;
@@ -37,7 +37,7 @@
     --red:   #cc241d;
     --green: #98971a;
     --yellow:#d79921;
-    --blue:  #458588;
+    --blue:  #1a5254;
     --purple:#b16286;
     --aqua:  #689d6a;
     --orange:#d65d0e;
@@ -58,7 +58,7 @@
   --red:   #cc241d;
   --green: #98971a;
   --yellow:#d79921;
-  --blue:  #458588;
+  --blue:  #1a5254;
   --purple:#b16286;
   --aqua:  #689d6a;
   --orange:#d65d0e;
@@ -78,7 +78,7 @@
   --red:   #fb4934;
   --green: #b8bb26;
   --yellow:#fabd2f;
-  --blue:  #83a598;
+  --blue:  #a0c0b4;
   --purple:#d3869b;
   --aqua:  #8ec07c;
   --orange:#fe8019;
@@ -142,6 +142,38 @@ a {
 a:hover {
   color: var(--aqua);
   text-decoration: underline;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+nav a:focus-visible {
+  outline: 2px solid var(--fg3);
+  outline-offset: 2px;
+}
+
+.feed-item a:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.skip-link {
+  position: absolute;
+  top: -9999px;
+  left: -9999px;
+}
+
+.skip-link:focus-visible {
+  top: 0;
+  left: 0;
+  z-index: 999;
+  padding: 0.5rem 1rem;
+  background: var(--blue);
+  color: var(--bg);
+  outline: 2px solid var(--fg);
+  outline-offset: 2px;
 }
 
 strong { color: var(--fg); }
@@ -221,12 +253,29 @@ nav {
 }
 
 nav a {
-  color: var(--fg4);
+  color: var(--fg3);
 }
 
 nav a:hover {
   color: var(--fg);
   text-decoration: none;
+}
+
+@media (prefers-color-scheme: light) {
+  nav a {
+    color: var(--fg);
+  }
+  nav a:hover {
+    color: var(--fg2);
+  }
+}
+
+[data-theme="light"] nav a {
+  color: var(--fg);
+}
+
+[data-theme="light"] nav a:hover {
+  color: var(--fg2);
 }
 
 /* =============================================================================
