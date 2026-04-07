@@ -288,7 +288,7 @@ nav a:hover {
 
 header {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 1.5rem;
   margin-bottom: 2rem;
   border-bottom: 1px solid var(--bg2);
