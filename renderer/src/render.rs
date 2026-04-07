@@ -237,7 +237,7 @@ fn render_link(props: &Value, children: &[Value], ctx: &RenderContext) -> String
                 .unwrap_or_else(|| format!("/{path}"));
             format!("<a href=\"{href}\">{description}</a>")
         }
-        "https" | "http" => {
+        "https" | "http" | "mailto" => {
             // Use raw-link (not path) — path strips the scheme prefix
             format!("<a href=\"{raw_link}\">{description}</a>")
         }
@@ -520,6 +520,22 @@ mod tests {
             result.contains("href=\"https://example.com\""),
             "Expected full https URL"
         );
+    }
+
+    // REND-05b: Render mailto link
+    #[test]
+    fn test_mailto_link() {
+        let node = json!(["link", {"type": "mailto", "raw-link": "mailto:hello@example.com", "path": "hello@example.com"}, "Email me"]);
+        let slugs = SlugMap::new();
+        let media = HashMap::new();
+        let ss = SyntaxSet::load_defaults_newlines();
+        let ctx = empty_ctx(&slugs, &media, &ss);
+        let result = render_node(&node, &ctx);
+        assert!(
+            result.contains("href=\"mailto:hello@example.com\""),
+            "Expected mailto href"
+        );
+        assert!(result.contains("Email me"), "Expected link description");
     }
 
     // REND-06: Render file link as plain text span
