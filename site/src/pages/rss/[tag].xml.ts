@@ -33,10 +33,11 @@ export async function GET({ params }: { params: { tag: string } }) {
       ? 'All public notes from addisonbeck.com'
       : `Notes tagged "${tag}" from addisonbeck.com`,
     site: SITE,
-    items: nodes.map((node: { title: string; slug: string; last_modified: string }) => ({
+    items: nodes.map((node: { id: string; title: string; slug: string; last_modified: string }) => ({
       title: node.title,
       pubDate: new Date(node.last_modified),
       link: `/${node.slug}`,
+      content: readFileSync(resolve(process.cwd(), `../rendered/${node.id}.html`), 'utf-8'),
     })),
   });
 }
