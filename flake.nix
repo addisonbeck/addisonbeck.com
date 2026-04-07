@@ -30,12 +30,13 @@
             rsync
             fswatch
             libwebp
-            poppler_utils
+            poppler-utils
           ];
           shellHook = ''
             echo "addisonbeck.com devshell"
             echo "Rust: $(rustc --version)"
             echo "Node: $(node --version)"
+            export PATH="$PWD/scripts:$PATH"
             if [ -d "$HOME/.cache/org-roam-export" ]; then
               echo "Syncing org-roam export cache → export-cache/..."
               rsync -a --delete "$HOME/.cache/org-roam-export/" export-cache/

@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# org-roam-export — Batch-export the org-roam database to sharded JSON files.
+#
+# Usage:
+#   org-roam-export [OUTPUT_DIR]
+#
+# Arguments:
+#   OUTPUT_DIR  Directory to write JSON files into.
+#               Defaults to ~/.cache/org-roam-export
+#
+# Environment:
+#   ORG_ROAM_DIR  Path to the org-roam notes directory (required).
+#                 On this system it defaults to the iCloud Drive roam path.
+#   ORG_ROAM_DB   Path to org-roam.db (optional).
+#                 Defaults to ~/.emacs.d/org-roam.db
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+OUTPUT_DIR="${1:-$HOME/.cache/org-roam-export}"
+
+if [ -z "${ORG_ROAM_DIR:-}" ]; then
+  ORG_ROAM_DIR="/Users/me/Library/Mobile Documents/com~apple~CloudDocs/notes/roam"
+fi
+
+ORG_ROAM_DB="${ORG_ROAM_DB:-$HOME/.emacs.d/org-roam.db}"
+
+EXPORT_EL="${SCRIPT_DIR}/org-roam-export.el"
+
+echo "org-roam-export: roam-dir=$ORG_ROAM_DIR" >&2
+echo "org-roam-export: db=$ORG_ROAM_DB" >&2
+echo "org-roam-export: output=$OUTPUT_DIR" >&2
+
+ORG_ROAM_DIR="$ORG_ROAM_DIR" \
+ORG_ROAM_DB="$ORG_ROAM_DB" \
+ORG_ROAM_EXPORT_OUTPUT="$OUTPUT_DIR" \
+  emacs -Q --batch --load "$EXPORT_EL"
+
+echo "org-roam-export: done. Output at $OUTPUT_DIR" >&2
