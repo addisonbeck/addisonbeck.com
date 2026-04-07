@@ -70,7 +70,7 @@ const galleryBySlug: Record<string, PdfGalleryEntry> = Object.fromEntries(
 );
 ---
 
-<NodeLayout title={nodeEntry.title} backlinks={backlinks}>
+<NodeLayout title={nodeEntry.title} backlinks={backlinks} tags={nodeEntry.tags ?? []}>
   {htmlParts.map((part, i) => (
     <>
       <div set:html={part} />

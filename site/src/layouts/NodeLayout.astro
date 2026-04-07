@@ -4,9 +4,10 @@ import BaseLayout from './BaseLayout.astro';
 interface Props {
   title: string;
   backlinks: Array<{ id: string; title: string; slug: string }>;
+  tags: string[];
 }
 
-const { title, backlinks } = Astro.props;
+const { title, backlinks, tags } = Astro.props;
 ---
 <BaseLayout title={title}>
   <nav aria-label="breadcrumb" data-pagefind-ignore>
@@ -17,6 +18,18 @@ const { title, backlinks } = Astro.props;
     <article data-pagefind-body>
       <slot />
     </article>
+    {tags.length > 0 && (
+      <aside data-pagefind-ignore>
+        <section class="tags">
+          <span class="tags-label">TAGS:</span>
+          <ul>
+            {tags.map(tag => (
+              <li>{tag}</li>
+            ))}
+          </ul>
+        </section>
+      </aside>
+    )}
     {backlinks.length > 0 && (
       <aside data-pagefind-ignore>
         <section class="backlinks">
@@ -50,5 +63,29 @@ const { title, backlinks } = Astro.props;
   }
   .backlinks li {
     margin-bottom: 0.25rem;
+  }
+  .tags {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--bg3);
+  }
+  .tags-label {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--fg3);
+    margin-bottom: 0.5rem;
+  }
+  .tags ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .tags li {
+    color: var(--fg3);
+    font-size: 0.875rem;
   }
 </style>
