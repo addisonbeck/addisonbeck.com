@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "astro": "6.1.4",
+    "@astrojs/rss": "^4.0.18",
     "@astrojs/svelte": "8.0.4",
     "svelte": "5.55.1",
     "astro-pagefind": "1.8.6"
