@@ -185,14 +185,11 @@ fn main() {
                                 Ok(img) => {
                                     let rgba = img.to_rgba8();
                                     let (w, h) = rgba.dimensions();
-                                    match webp::Encoder::from_rgba(rgba.as_raw(), w, h).encode(85.0)
-                                    {
-                                        webp_data => {
-                                            fs::write(&dest, &*webp_data).unwrap_or_else(|e| {
-                                                panic!("Cannot write WebP {}: {}", dest, e)
-                                            });
-                                        }
-                                    }
+                                    let webp_data =
+                                        webp::Encoder::from_rgba(rgba.as_raw(), w, h).encode(85.0);
+                                    fs::write(&dest, &*webp_data).unwrap_or_else(|e| {
+                                        panic!("Cannot write WebP {}: {}", dest, e)
+                                    });
                                 }
                                 Err(e) => {
                                     eprintln!("[renderer] WARNING: cannot decode {src}: {e}, copying verbatim");
@@ -265,6 +262,7 @@ fn main() {
             tags: node.tags.clone(),
             backlinks: node.linked_from.clone(),
             last_modified,
+            pdf_galleries: None,
         });
 
         eprintln!("[renderer] rendered: {} ({})", node.title, node.id);
