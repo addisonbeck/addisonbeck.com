@@ -48,11 +48,35 @@ const backlinks = (nodeEntry.backlinks as string[]).map((backlinkId: string) => 
     ? { id: backlinkId, title: entry.title, slug: entry.slug }
     : { id: backlinkId, title: backlinkId, slug: backlinkId };
 });
+
+// Split HTML at PDF gallery placeholders so galleries render inline
+type PdfPage = { url: string; width: number; height: number };
+type PdfGalleryEntry = { slug: string; page_count: number; pages: PdfPage[] };
+
+const PDF_PLACEHOLDER_RE = /<div data-pdf-gallery-slug="([^"]+)"><\/div>/g;
+const htmlParts: string[] = [];
+const gallerySlugOrder: string[] = [];
+let lastIndex = 0;
+let match: RegExpExecArray | null;
+while ((match = PDF_PLACEHOLDER_RE.exec(htmlContent)) !== null) {
+  htmlParts.push(htmlContent.slice(lastIndex, match.index));
+  gallerySlugOrder.push(match[1]);
+  lastIndex = match.index + match[0].length;
+}
+htmlParts.push(htmlContent.slice(lastIndex));
+
+const galleryBySlug: Record<string, PdfGalleryEntry> = Object.fromEntries(
+  ((nodeEntry.pdf_galleries ?? []) as PdfGalleryEntry[]).map((g) => [g.slug, g])
+);
 ---
 
 <NodeLayout title={nodeEntry.title} backlinks={backlinks}>
-  <div set:html={htmlContent} />
-  {nodeEntry.pdf_galleries && nodeEntry.pdf_galleries.length > 0 && (
-    <PdfGallery client:load pages={nodeEntry.pdf_galleries[0].pages} />
-  )}
+  {htmlParts.map((part, i) => (
+    <>
+      <div set:html={part} />
+      {gallerySlugOrder[i] && galleryBySlug[gallerySlugOrder[i]] && (
+        <PdfGallery client:load pages={galleryBySlug[gallerySlugOrder[i]].pages} />
+      )}
+    </>
+  ))}
 </NodeLayout>

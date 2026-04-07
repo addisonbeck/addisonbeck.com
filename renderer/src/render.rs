@@ -249,6 +249,12 @@ fn render_link(props: &Value, children: &[Value], ctx: &RenderContext) -> String
                     render_children(children, ctx)
                 };
                 format!("<img src=\"{web_url}\" alt=\"{alt}\">")
+            } else if path.to_lowercase().ends_with(".pdf") {
+                let pdf_slug = std::path::Path::new(path)
+                    .file_stem()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or(path);
+                format!("<div data-pdf-gallery-slug=\"{pdf_slug}\"></div>")
             } else {
                 format!("<span class=\"file-link\">{description}</span>")
             }
