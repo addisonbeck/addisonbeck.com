@@ -2,7 +2,6 @@
   export let pages: Array<{ url: string; width: number; height: number }>;
 
   let currentPage = 0;
-  let tabEls: HTMLButtonElement[] = [];
 
   $: pagesToPreload = new Set([
     currentPage,
@@ -12,16 +11,15 @@
 
   function goTo(index: number) {
     currentPage = index;
-    tabEls[currentPage]?.focus();
   }
 
   function handleKeydown(event: KeyboardEvent) {
     if (event.key === 'ArrowRight') {
       event.preventDefault();
-      goTo((currentPage + 1) % pages.length);
+      goTo(Math.min(currentPage + 1, pages.length - 1));
     } else if (event.key === 'ArrowLeft') {
       event.preventDefault();
-      goTo((currentPage - 1 + pages.length) % pages.length);
+      goTo(Math.max(currentPage - 1, 0));
     } else if (event.key === 'Home') {
       event.preventDefault();
       goTo(0);
@@ -32,37 +30,12 @@
   }
 </script>
 
-<section
-  role="region"
-  aria-roledescription="carousel"
-  aria-label="PDF Document Pages"
->
-  <div
-    role="tablist"
-    aria-label="PDF pages"
-    on:keydown={handleKeydown}
-  >
-    {#each pages as _page, i}
-      <button
-        role="tab"
-        aria-selected={i === currentPage}
-        aria-controls={`pdf-panel-${i}`}
-        id={`pdf-tab-${i}`}
-        tabindex={i === currentPage ? 0 : -1}
-        bind:this={tabEls[i]}
-        on:click={() => goTo(i)}
-      >
-        {i + 1}
-      </button>
-    {/each}
-  </div>
-
-  <div aria-live="polite" aria-atomic="false">
+<section class="pdf-gallery" aria-roledescription="carousel" aria-label="PDF Document Pages" on:keydown={handleKeydown}>
+  <div class="pdf-gallery__page" aria-live="polite" aria-atomic="false">
     {#each pages as page, i}
       <div
-        role="tabpanel"
-        id={`pdf-panel-${i}`}
-        aria-labelledby={`pdf-tab-${i}`}
+        role="region"
+        aria-label={`Page ${i + 1} of ${pages.length}`}
         hidden={i !== currentPage}
       >
         {#if pagesToPreload.has(i)}
@@ -75,5 +48,22 @@
         {/if}
       </div>
     {/each}
+  </div>
+  <div class="pdf-gallery__nav">
+    <button
+      class="pdf-gallery__btn"
+      aria-label="Previous page"
+      disabled={currentPage === 0}
+      on:click={() => goTo(currentPage - 1)}
+    >←</button>
+    <span class="pdf-gallery__counter" aria-live="polite" aria-atomic="true">
+      {currentPage + 1} / {pages.length}
+    </span>
+    <button
+      class="pdf-gallery__btn"
+      aria-label="Next page"
+      disabled={currentPage === pages.length - 1}
+      on:click={() => goTo(currentPage + 1)}
+    >→</button>
   </div>
 </section>
