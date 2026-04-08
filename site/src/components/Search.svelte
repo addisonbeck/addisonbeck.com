@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount } from "svelte";
 
   let searchEl: HTMLElement;
 
   onMount(async () => {
-    await import('/pagefind/pagefind-ui.js');
+    await import("/pagefind/pagefind-ui.js");
     // pagefind-ui.js is an IIFE that attaches PagefindUI to window
     new (window as any).PagefindUI({
       element: searchEl,

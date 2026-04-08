@@ -1,5 +1,5 @@
 ---
-import BaseLayout from './BaseLayout.astro';
+import BaseLayout from "./BaseLayout.astro";
 
 interface Props {
   title: string;
@@ -9,6 +9,7 @@ interface Props {
 
 const { title, backlinks, tags } = Astro.props;
 ---
+
 <BaseLayout title={title}>
   <nav aria-label="breadcrumb" data-pagefind-ignore>
     <a href="/">← Home</a>
@@ -18,30 +19,36 @@ const { title, backlinks, tags } = Astro.props;
     <article data-pagefind-body>
       <slot />
     </article>
-    {tags.length > 0 && (
-      <aside data-pagefind-ignore>
-        <section class="tags">
-          <span class="tags-label">TAGS:</span>
-          <ul>
-            {tags.map(tag => (
-              <li>{tag}</li>
-            ))}
-          </ul>
-        </section>
-      </aside>
-    )}
-    {backlinks.length > 0 && (
-      <aside data-pagefind-ignore>
-        <section class="backlinks">
-          <h2>Linked from</h2>
-          <ul>
-            {backlinks.map(link => (
-              <li><a href={`/${link.slug}`}>{link.title}</a></li>
-            ))}
-          </ul>
-        </section>
-      </aside>
-    )}
+    {
+      tags.length > 0 && (
+        <aside data-pagefind-ignore>
+          <section class="tags">
+            <span class="tags-label">TAGS:</span>
+            <ul>
+              {tags.map((tag) => (
+                <li>{tag}</li>
+              ))}
+            </ul>
+          </section>
+        </aside>
+      )
+    }
+    {
+      backlinks.length > 0 && (
+        <aside data-pagefind-ignore>
+          <section class="backlinks">
+            <h2>Linked from</h2>
+            <ul>
+              {backlinks.map((link) => (
+                <li>
+                  <a href={`/${link.slug}`}>{link.title}</a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </aside>
+      )
+    }
   </main>
 </BaseLayout>
 

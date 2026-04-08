@@ -1,18 +1,18 @@
 ---
-import { readFileSync } from 'fs';
-import { resolve } from 'path';
-import NodeLayout from '../layouts/NodeLayout.astro';
-import PdfGallery from '../components/PdfGallery.svelte';
+import { readFileSync } from "fs";
+import { resolve } from "path";
+import NodeLayout from "../layouts/NodeLayout.astro";
+import PdfGallery from "../components/PdfGallery.svelte";
 
 // index.json is relative to the project root (one level up from site/)
-const INDEX_PATH = resolve(process.cwd(), '../rendered/index.json');
-const ALIAS_MAP_PATH = resolve(process.cwd(), '../rendered/alias_map.json');
+const INDEX_PATH = resolve(process.cwd(), "../rendered/index.json");
+const ALIAS_MAP_PATH = resolve(process.cwd(), "../rendered/alias_map.json");
 
 export async function getStaticPaths() {
-  const INDEX_PATH = resolve(process.cwd(), '../rendered/index.json');
-  const ALIAS_MAP_PATH = resolve(process.cwd(), '../rendered/alias_map.json');
-  const index = JSON.parse(readFileSync(INDEX_PATH, 'utf-8'));
-  const aliasMap = JSON.parse(readFileSync(ALIAS_MAP_PATH, 'utf-8'));
+  const INDEX_PATH = resolve(process.cwd(), "../rendered/index.json");
+  const ALIAS_MAP_PATH = resolve(process.cwd(), "../rendered/alias_map.json");
+  const index = JSON.parse(readFileSync(INDEX_PATH, "utf-8"));
+  const aliasMap = JSON.parse(readFileSync(ALIAS_MAP_PATH, "utf-8"));
 
   const paths = [];
 
@@ -30,7 +30,7 @@ export async function getStaticPaths() {
 const { slug } = Astro.params;
 const { nodeId } = Astro.props;
 
-const INDEX_DATA = JSON.parse(readFileSync(INDEX_PATH, 'utf-8'));
+const INDEX_DATA = JSON.parse(readFileSync(INDEX_PATH, "utf-8"));
 const nodeEntry = INDEX_DATA.find((n: { id: string }) => n.id === nodeId);
 
 if (!nodeEntry) {
@@ -39,15 +39,17 @@ if (!nodeEntry) {
 
 // Read pre-rendered HTML fragment
 const htmlPath = resolve(process.cwd(), `../rendered/${nodeId}.html`);
-const htmlContent = readFileSync(htmlPath, 'utf-8');
+const htmlContent = readFileSync(htmlPath, "utf-8");
 
 // Resolve backlink IDs to title + slug entries
-const backlinks = (nodeEntry.backlinks as string[]).map((backlinkId: string) => {
-  const entry = INDEX_DATA.find((n: { id: string }) => n.id === backlinkId);
-  return entry
-    ? { id: backlinkId, title: entry.title, slug: entry.slug }
-    : { id: backlinkId, title: backlinkId, slug: backlinkId };
-});
+const backlinks = (nodeEntry.backlinks as string[]).map(
+  (backlinkId: string) => {
+    const entry = INDEX_DATA.find((n: { id: string }) => n.id === backlinkId);
+    return entry
+      ? { id: backlinkId, title: entry.title, slug: entry.slug }
+      : { id: backlinkId, title: backlinkId, slug: backlinkId };
+  },
+);
 
 // Split HTML at PDF gallery placeholders so galleries render inline
 type PdfPage = { url: string; width: number; height: number };
@@ -66,17 +68,29 @@ while ((match = PDF_PLACEHOLDER_RE.exec(htmlContent)) !== null) {
 htmlParts.push(htmlContent.slice(lastIndex));
 
 const galleryBySlug: Record<string, PdfGalleryEntry> = Object.fromEntries(
-  ((nodeEntry.pdf_galleries ?? []) as PdfGalleryEntry[]).map((g) => [g.slug, g])
+  ((nodeEntry.pdf_galleries ?? []) as PdfGalleryEntry[]).map((g) => [
+    g.slug,
+    g,
+  ]),
 );
 ---
 
-<NodeLayout title={nodeEntry.title} backlinks={backlinks} tags={nodeEntry.tags ?? []}>
-  {htmlParts.map((part, i) => (
-    <>
-      <div set:html={part} />
-      {gallerySlugOrder[i] && galleryBySlug[gallerySlugOrder[i]] && (
-        <PdfGallery client:load pages={galleryBySlug[gallerySlugOrder[i]].pages} />
-      )}
-    </>
-  ))}
+<NodeLayout
+  title={nodeEntry.title}
+  backlinks={backlinks}
+  tags={nodeEntry.tags ?? []}
+>
+  {
+    htmlParts.map((part, i) => (
+      <>
+        <div set:html={part} />
+        {gallerySlugOrder[i] && galleryBySlug[gallerySlugOrder[i]] && (
+          <PdfGallery
+            client:load
+            pages={galleryBySlug[gallerySlugOrder[i]].pages}
+          />
+        )}
+      </>
+    ))
+  }
 </NodeLayout>

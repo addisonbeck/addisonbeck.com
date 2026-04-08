@@ -4,92 +4,94 @@
    ============================================================================= */
 
 :root {
-  --bg:    #1d2021;
-  --bg1:   #282828;
-  --bg2:   #3c3836;
-  --bg3:   #504945;
-  --bg4:   #665c54;
-  --fg:    #ebdbb2;
-  --fg2:   #d5c4a1;
-  --fg3:   #bdae93;
-  --fg4:   #a89984;
-  --red:   #fb4934;
+  --bg: #1d2021;
+  --bg1: #282828;
+  --bg2: #3c3836;
+  --bg3: #504945;
+  --bg4: #665c54;
+  --fg: #ebdbb2;
+  --fg2: #d5c4a1;
+  --fg3: #bdae93;
+  --fg4: #a89984;
+  --red: #fb4934;
   --green: #b8bb26;
-  --yellow:#fabd2f;
-  --blue:  #a0c0b4;
-  --purple:#d3869b;
-  --aqua:  #8ec07c;
-  --orange:#fe8019;
-  --gray:  #928374;
+  --yellow: #fabd2f;
+  --blue: #a0c0b4;
+  --purple: #d3869b;
+  --aqua: #8ec07c;
+  --orange: #fe8019;
+  --gray: #928374;
 }
 
 @media (prefers-color-scheme: light) {
   :root {
-    --bg:    #fbf1c7;
-    --bg1:   #ebdbb2;
-    --bg2:   #d5c4a1;
-    --bg3:   #bdae93;
-    --bg4:   #a89984;
-    --fg:    #3c3836;
-    --fg2:   #504945;
-    --fg3:   #665c54;
-    --fg4:   #7c6f64;
-    --red:   #cc241d;
+    --bg: #fbf1c7;
+    --bg1: #ebdbb2;
+    --bg2: #d5c4a1;
+    --bg3: #bdae93;
+    --bg4: #a89984;
+    --fg: #3c3836;
+    --fg2: #504945;
+    --fg3: #665c54;
+    --fg4: #7c6f64;
+    --red: #cc241d;
     --green: #98971a;
-    --yellow:#d79921;
-    --blue:  #1a5254;
-    --purple:#b16286;
-    --aqua:  #689d6a;
-    --orange:#d65d0e;
-    --gray:  #928374;
+    --yellow: #d79921;
+    --blue: #1a5254;
+    --purple: #b16286;
+    --aqua: #689d6a;
+    --orange: #d65d0e;
+    --gray: #928374;
   }
 }
 
 [data-theme="light"] {
-  --bg:    #fbf1c7;
-  --bg1:   #ebdbb2;
-  --bg2:   #d5c4a1;
-  --bg3:   #bdae93;
-  --bg4:   #a89984;
-  --fg:    #3c3836;
-  --fg2:   #504945;
-  --fg3:   #665c54;
-  --fg4:   #7c6f64;
-  --red:   #cc241d;
+  --bg: #fbf1c7;
+  --bg1: #ebdbb2;
+  --bg2: #d5c4a1;
+  --bg3: #bdae93;
+  --bg4: #a89984;
+  --fg: #3c3836;
+  --fg2: #504945;
+  --fg3: #665c54;
+  --fg4: #7c6f64;
+  --red: #cc241d;
   --green: #98971a;
-  --yellow:#d79921;
-  --blue:  #1a5254;
-  --purple:#b16286;
-  --aqua:  #689d6a;
-  --orange:#d65d0e;
-  --gray:  #928374;
+  --yellow: #d79921;
+  --blue: #1a5254;
+  --purple: #b16286;
+  --aqua: #689d6a;
+  --orange: #d65d0e;
+  --gray: #928374;
 }
 
 [data-theme="dark"] {
-  --bg:    #1d2021;
-  --bg1:   #282828;
-  --bg2:   #3c3836;
-  --bg3:   #504945;
-  --bg4:   #665c54;
-  --fg:    #ebdbb2;
-  --fg2:   #d5c4a1;
-  --fg3:   #bdae93;
-  --fg4:   #a89984;
-  --red:   #fb4934;
+  --bg: #1d2021;
+  --bg1: #282828;
+  --bg2: #3c3836;
+  --bg3: #504945;
+  --bg4: #665c54;
+  --fg: #ebdbb2;
+  --fg2: #d5c4a1;
+  --fg3: #bdae93;
+  --fg4: #a89984;
+  --red: #fb4934;
   --green: #b8bb26;
-  --yellow:#fabd2f;
-  --blue:  #a0c0b4;
-  --purple:#d3869b;
-  --aqua:  #8ec07c;
-  --orange:#fe8019;
-  --gray:  #928374;
+  --yellow: #fabd2f;
+  --blue: #a0c0b4;
+  --purple: #d3869b;
+  --aqua: #8ec07c;
+  --orange: #fe8019;
+  --gray: #928374;
 }
 
 /* =============================================================================
    Reset
    ============================================================================= */
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -118,17 +120,32 @@ body {
    Typography
    ============================================================================= */
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   color: var(--fg);
   line-height: 1.25;
   margin-top: 2rem;
   margin-bottom: 0.5rem;
 }
 
-h1 { font-size: 1.5rem; }
-h2 { font-size: 1.25rem; }
-h3 { font-size: 1.1rem; }
-h4, h5, h6 { font-size: 1rem; }
+h1 {
+  font-size: 1.5rem;
+}
+h2 {
+  font-size: 1.25rem;
+}
+h3 {
+  font-size: 1.1rem;
+}
+h4,
+h5,
+h6 {
+  font-size: 1rem;
+}
 
 p {
   margin-bottom: 1rem;
@@ -176,15 +193,21 @@ nav a:focus-visible {
   outline-offset: 2px;
 }
 
-strong { color: var(--fg); }
-em     { color: var(--fg2); }
+strong {
+  color: var(--fg);
+}
+em {
+  color: var(--fg2);
+}
 
 /* =============================================================================
    Code
    ============================================================================= */
 
 code {
-  font-family: ui-monospace, "SFMono-Regular", "Cascadia Code", "Source Code Pro", Menlo, Consolas, monospace;
+  font-family:
+    ui-monospace, "SFMono-Regular", "Cascadia Code", "Source Code Pro", Menlo,
+    Consolas, monospace;
   font-size: 0.9em;
   background-color: var(--bg1);
   color: var(--green);
@@ -229,7 +252,8 @@ hr {
   margin: 2rem 0;
 }
 
-ul, ol {
+ul,
+ol {
   padding-left: 1.5rem;
   margin-bottom: 1rem;
 }
@@ -363,14 +387,14 @@ article {
    ============================================================================= */
 
 .search-widget {
-  --pagefind-ui-primary:       var(--aqua);
-  --pagefind-ui-text:          var(--fg);
-  --pagefind-ui-background:    var(--bg1);
-  --pagefind-ui-border:        var(--bg3);
-  --pagefind-ui-tag:           var(--bg2);
-  --pagefind-ui-border-width:  1px;
+  --pagefind-ui-primary: var(--aqua);
+  --pagefind-ui-text: var(--fg);
+  --pagefind-ui-background: var(--bg1);
+  --pagefind-ui-border: var(--bg3);
+  --pagefind-ui-tag: var(--bg2);
+  --pagefind-ui-border-width: 1px;
   --pagefind-ui-border-radius: 2px;
-  --pagefind-ui-font:          ui-serif, Georgia, "Times New Roman", serif;
+  --pagefind-ui-font: ui-serif, Georgia, "Times New Roman", serif;
 }
 
 .search-widget .pagefind-ui__search-input:focus,

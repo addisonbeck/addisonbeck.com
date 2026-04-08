@@ -14,5 +14,10 @@
     "@astrojs/svelte": "8.0.4",
     "svelte": "5.55.1",
     "astro-pagefind": "1.8.6"
+  },
+  "devDependencies": {
+    "prettier": "^3.4.0",
+    "prettier-plugin-astro": "^0.14.0",
+    "prettier-plugin-svelte": "^3.3.0"
   }
 }
