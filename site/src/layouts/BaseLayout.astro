@@ -355,21 +355,21 @@ const { title } = Astro.props;
       }
 
       .feed-item {
+        display: block;
+        padding: 0.6rem 0;
+        border-bottom: 1px solid var(--bg2);
+      }
+
+      .feed-item-header {
         display: flex;
         align-items: baseline;
         justify-content: space-between;
         gap: 1rem;
-        padding: 0.35rem 0;
-        border-bottom: 1px solid var(--bg2);
       }
 
       .feed-item a {
         color: var(--fg2);
-        flex: 1;
         min-width: 0;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
       }
 
       .feed-item a:hover {
@@ -381,6 +381,28 @@ const { title } = Astro.props;
         color: var(--fg4);
         font-size: 0.8rem;
         flex-shrink: 0;
+      }
+
+      .feed-item-preview {
+        color: var(--fg);
+        font-size: 0.875rem;
+        line-height: 1.4;
+        margin: 0.2rem 0 0.3rem;
+      }
+
+      .feed-item-tags {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        color: var(--fg4);
+      }
+
+      .feed-item-tags li {
+        margin-bottom: 0;
       }
 
       /* =============================================================================

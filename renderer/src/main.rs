@@ -401,6 +401,9 @@ fn main() {
         // Extract LAST_MODIFIED
         let last_modified = render::extract_last_modified(&node.ast);
 
+        // Extract plain-text preview (first 200 chars of content)
+        let preview = render::extract_preview_text(&node.ast, 200);
+
         // Get canonical slug
         let canonical_slug = slug_map
             .get(&node.id)
@@ -415,6 +418,7 @@ fn main() {
             tags: node.tags.clone(),
             backlinks: node.linked_from.clone(),
             last_modified,
+            preview,
             pdf_galleries: if pdf_galleries.is_empty() {
                 None
             } else {

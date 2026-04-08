@@ -68,11 +68,21 @@ function formatDate(iso: string): string {
       {
         sorted.map((node) => (
           <li class="feed-item">
-            <a href={`/${node.slug}`}>{node.title}</a>
-            {formatDate(node.last_modified) && (
-              <time datetime={node.last_modified}>
-                {formatDate(node.last_modified)}
-              </time>
+            <div class="feed-item-header">
+              <a href={`/${node.slug}`}>{node.title}</a>
+              {formatDate(node.last_modified) && (
+                <time datetime={node.last_modified}>
+                  {formatDate(node.last_modified)}
+                </time>
+              )}
+            </div>
+            {node.preview && <p class="feed-item-preview">{node.preview}</p>}
+            {node.tags.length > 0 && (
+              <ul class="feed-item-tags" aria-label="tags">
+                {node.tags.map((tag: string) => (
+                  <li data-tag={tag}>{tag}</li>
+                ))}
+              </ul>
             )}
           </li>
         ))

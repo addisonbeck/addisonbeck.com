@@ -41,6 +41,7 @@ pub struct IndexEntry {
     pub tags: Vec<String>,
     pub backlinks: Vec<String>,
     pub last_modified: String,
+    pub preview: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub pdf_galleries: Option<Vec<PdfGallery>>,
 }
@@ -59,6 +60,7 @@ mod tests {
             tags: vec![],
             backlinks: vec![],
             last_modified: "2026-01-01".to_string(),
+            preview: "".to_string(),
             pdf_galleries: None,
         };
         let json = serde_json::to_string(&entry).unwrap();
@@ -75,6 +77,7 @@ mod tests {
             tags: vec![],
             backlinks: vec![],
             last_modified: "2026-01-01".to_string(),
+            preview: "".to_string(),
             pdf_galleries: Some(vec![PdfGallery {
                 slug: "my-doc".to_string(),
                 page_count: 1,

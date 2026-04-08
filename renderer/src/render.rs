@@ -266,6 +266,76 @@ fn render_link(props: &Value, children: &[Value], ctx: &RenderContext) -> String
     }
 }
 
+/// Extract a plain-text preview from an org-element AST.
+/// Collects text from paragraphs and inline elements, skipping code blocks,
+/// property drawers, headlines, and other structural/metadata elements.
+/// Returns at most `max_chars` characters, with a trailing ellipsis if truncated.
+pub fn extract_preview_text(ast: &Value, max_chars: usize) -> String {
+    let mut buf = String::new();
+    // Collect a bit more than needed to account for whitespace normalization
+    collect_preview_text(ast, &mut buf, max_chars * 3);
+    let normalized: String = buf.split_whitespace().collect::<Vec<_>>().join(" ");
+    if normalized.len() > max_chars {
+        // Find a clean char boundary to truncate at
+        let truncated = &normalized[..normalized
+            .char_indices()
+            .map(|(i, _)| i)
+            .take_while(|&i| i <= max_chars)
+            .last()
+            .unwrap_or(max_chars)];
+        format!("{}…", truncated.trim_end())
+    } else {
+        normalized
+    }
+}
+
+fn collect_preview_text(node: &Value, buf: &mut String, limit: usize) {
+    if buf.len() >= limit {
+        return;
+    }
+    match node {
+        Value::String(s) => buf.push_str(s),
+        Value::Array(arr) if arr.len() >= 2 => {
+            let element_type = arr[0].as_str().unwrap_or("");
+            match element_type {
+                // Skip structural, metadata, and code elements entirely
+                "headline" | "property-drawer" | "node-property" | "keyword" | "planning"
+                | "comment" | "comment-block" | "src-block" | "example-block" | "fixed-width"
+                | "clock" | "drawer" | "babel-call" | "export-block" | "export-snippet"
+                | "macro" | "radio-target" | "target" | "special-block" | "inlinetask"
+                | "statistics-cookie" | "todo-keyword" | "diary-sexp" | "dynamic-block"
+                | "inline-babel-call" => {}
+                // Extract the value string from verbatim/code spans
+                "verbatim" | "code" => {
+                    if let Some(v) = arr[1].get("value").and_then(|v| v.as_str()) {
+                        buf.push_str(v);
+                    }
+                }
+                // For links, extract description (children) only
+                "link" => {
+                    for child in arr.iter().skip(2) {
+                        collect_preview_text(child, buf, limit);
+                    }
+                }
+                // After a paragraph add a space so sentences don't run together
+                "paragraph" => {
+                    for child in arr.iter().skip(2) {
+                        collect_preview_text(child, buf, limit);
+                    }
+                    buf.push(' ');
+                }
+                // All other elements: recurse into children
+                _ => {
+                    for child in arr.iter().skip(2) {
+                        collect_preview_text(child, buf, limit);
+                    }
+                }
+            }
+        }
+        _ => {}
+    }
+}
+
 /// Extract LAST_MODIFIED from the org-data AST node.
 /// Primary: reads ast[1]["LAST_MODIFIED"] directly from org-data props.
 /// Two org timestamp formats: "<2025-12-02 01:25>" and "<2026-01-16>".
