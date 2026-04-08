@@ -11,8 +11,559 @@ const { title } = Astro.props;
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
-    <link rel="stylesheet" href="/styles/global.css" />
-    <link rel="stylesheet" href="/styles/highlight.css" />
+    <style is:global>
+/* =============================================================================
+   Gruvbox Hard Dark — default theme
+   Light theme activates via system preference or [data-theme="light"]
+   ============================================================================= */
+
+:root {
+  --bg:    #1d2021;
+  --bg1:   #282828;
+  --bg2:   #3c3836;
+  --bg3:   #504945;
+  --bg4:   #665c54;
+  --fg:    #ebdbb2;
+  --fg2:   #d5c4a1;
+  --fg3:   #bdae93;
+  --fg4:   #a89984;
+  --red:   #fb4934;
+  --green: #b8bb26;
+  --yellow:#fabd2f;
+  --blue:  #a0c0b4;
+  --purple:#d3869b;
+  --aqua:  #8ec07c;
+  --orange:#fe8019;
+  --gray:  #928374;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg:    #fbf1c7;
+    --bg1:   #ebdbb2;
+    --bg2:   #d5c4a1;
+    --bg3:   #bdae93;
+    --bg4:   #a89984;
+    --fg:    #3c3836;
+    --fg2:   #504945;
+    --fg3:   #665c54;
+    --fg4:   #7c6f64;
+    --red:   #cc241d;
+    --green: #98971a;
+    --yellow:#d79921;
+    --blue:  #1a5254;
+    --purple:#b16286;
+    --aqua:  #689d6a;
+    --orange:#d65d0e;
+    --gray:  #928374;
+  }
+}
+
+[data-theme="light"] {
+  --bg:    #fbf1c7;
+  --bg1:   #ebdbb2;
+  --bg2:   #d5c4a1;
+  --bg3:   #bdae93;
+  --bg4:   #a89984;
+  --fg:    #3c3836;
+  --fg2:   #504945;
+  --fg3:   #665c54;
+  --fg4:   #7c6f64;
+  --red:   #cc241d;
+  --green: #98971a;
+  --yellow:#d79921;
+  --blue:  #1a5254;
+  --purple:#b16286;
+  --aqua:  #689d6a;
+  --orange:#d65d0e;
+  --gray:  #928374;
+}
+
+[data-theme="dark"] {
+  --bg:    #1d2021;
+  --bg1:   #282828;
+  --bg2:   #3c3836;
+  --bg3:   #504945;
+  --bg4:   #665c54;
+  --fg:    #ebdbb2;
+  --fg2:   #d5c4a1;
+  --fg3:   #bdae93;
+  --fg4:   #a89984;
+  --red:   #fb4934;
+  --green: #b8bb26;
+  --yellow:#fabd2f;
+  --blue:  #a0c0b4;
+  --purple:#d3869b;
+  --aqua:  #8ec07c;
+  --orange:#fe8019;
+  --gray:  #928374;
+}
+
+/* =============================================================================
+   Reset
+   ============================================================================= */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* =============================================================================
+   Base
+   ============================================================================= */
+
+html {
+  font-size: 18px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--fg);
+  font-family: ui-serif, Georgia, "Times New Roman", serif;
+  line-height: 1.6;
+  padding: 2rem 1rem;
+  max-width: 65ch;
+  margin: 0 auto;
+}
+
+/* =============================================================================
+   Typography
+   ============================================================================= */
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--fg);
+  line-height: 1.25;
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+h1 { font-size: 1.5rem; }
+h2 { font-size: 1.25rem; }
+h3 { font-size: 1.1rem; }
+h4, h5, h6 { font-size: 1rem; }
+
+p {
+  margin-bottom: 1rem;
+}
+
+a {
+  color: var(--blue);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--aqua);
+  text-decoration: underline;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+nav a:focus-visible {
+  outline: 2px solid var(--fg3);
+  outline-offset: 2px;
+}
+
+.feed-item a:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.skip-link {
+  position: absolute;
+  top: -9999px;
+  left: -9999px;
+}
+
+.skip-link:focus-visible {
+  top: 0;
+  left: 0;
+  z-index: 999;
+  padding: 0.5rem 1rem;
+  background: var(--blue);
+  color: var(--bg);
+  outline: 2px solid var(--fg);
+  outline-offset: 2px;
+}
+
+strong { color: var(--fg); }
+em     { color: var(--fg2); }
+
+/* =============================================================================
+   Code
+   ============================================================================= */
+
+code {
+  font-family: ui-monospace, "SFMono-Regular", "Cascadia Code", "Source Code Pro", Menlo, Consolas, monospace;
+  font-size: 0.9em;
+  background-color: var(--bg1);
+  color: var(--green);
+  padding: 0.1em 0.3em;
+  border-radius: 2px;
+}
+
+pre {
+  background-color: var(--bg1);
+  border-left: 3px solid var(--bg3);
+  padding: 1rem;
+  overflow-x: auto;
+  margin-bottom: 1rem;
+  line-height: 1.4;
+  width: min(90vw, 80ch);
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+pre code {
+  background: none;
+  padding: 0;
+  font-size: 0.875rem;
+  color: var(--fg);
+}
+
+/* =============================================================================
+   Block elements
+   ============================================================================= */
+
+blockquote {
+  border-left: 3px solid var(--yellow);
+  padding-left: 1rem;
+  color: var(--fg3);
+  margin-bottom: 1rem;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid var(--bg3);
+  margin: 2rem 0;
+}
+
+ul, ol {
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+li {
+  margin-bottom: 0.25rem;
+}
+
+/* =============================================================================
+   Media
+   ============================================================================= */
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* =============================================================================
+   Nav
+   ============================================================================= */
+
+nav {
+  margin-bottom: 2rem;
+  font-size: 0.875rem;
+}
+
+nav a {
+  color: var(--fg3);
+}
+
+nav a:hover {
+  color: var(--fg);
+  text-decoration: none;
+}
+
+@media (prefers-color-scheme: light) {
+  nav a {
+    color: var(--fg);
+  }
+  nav a:hover {
+    color: var(--fg2);
+  }
+}
+
+[data-theme="light"] nav a {
+  color: var(--fg);
+}
+
+[data-theme="light"] nav a:hover {
+  color: var(--fg2);
+}
+
+/* =============================================================================
+   Page header (index.astro)
+   ============================================================================= */
+
+header {
+  display: flex;
+  align-items: baseline;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--bg2);
+  padding-bottom: 1rem;
+}
+
+header h1 {
+  font-size: 1rem;
+  margin: 0;
+  color: var(--yellow);
+}
+
+header nav {
+  margin: 0;
+}
+
+/* =============================================================================
+   Feed (index.astro)
+   ============================================================================= */
+
+.feed {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.feed-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--bg2);
+}
+
+.feed-item a {
+  color: var(--fg2);
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.feed-item a:hover {
+  color: var(--fg);
+  text-decoration: none;
+}
+
+.feed-item time {
+  color: var(--fg4);
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+/* =============================================================================
+   Node page (NodeLayout.astro)
+   ============================================================================= */
+
+.page-title {
+  color: var(--yellow);
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+}
+
+article {
+  margin-bottom: 2rem;
+}
+
+/* =============================================================================
+   Pagefind UI (search.astro)
+   ============================================================================= */
+
+.search-widget {
+  --pagefind-ui-primary:       var(--aqua);
+  --pagefind-ui-text:          var(--fg);
+  --pagefind-ui-background:    var(--bg1);
+  --pagefind-ui-border:        var(--bg3);
+  --pagefind-ui-tag:           var(--bg2);
+  --pagefind-ui-border-width:  1px;
+  --pagefind-ui-border-radius: 2px;
+  --pagefind-ui-font:          ui-serif, Georgia, "Times New Roman", serif;
+}
+
+.search-widget .pagefind-ui__search-input:focus,
+.search-widget .pagefind-ui__search-input:focus-visible {
+  outline: 2px solid var(--aqua);
+}
+
+.search-widget .pagefind-ui mark {
+  background-color: var(--yellow);
+  color: var(--bg);
+}
+
+/* PDF Gallery */
+.pdf-gallery {
+  position: relative;
+}
+
+.pdf-gallery__page img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.pdf-gallery__nav {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.pdf-gallery__btn {
+  background: none;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  opacity: 0.7;
+}
+
+.pdf-gallery__btn:hover:not(:disabled) {
+  opacity: 1;
+}
+
+.pdf-gallery__btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.pdf-gallery__counter {
+  font-size: 0.85rem;
+  opacity: 0.6;
+}
+
+/* =============================================================================
+   Syntax highlighting -- Gruvbox theme
+   Token classes emitted by syntect ClassStyle::Spaced.
+   Scoped to pre code to avoid collisions with prose styles.
+   ============================================================================= */
+
+/* Comments */
+pre code .comment {
+  color: var(--gray);
+  font-style: italic;
+}
+
+/* Keywords: fn, let, if, else, for, while, return, etc. */
+pre code .keyword {
+  color: var(--orange);
+}
+
+/* Storage: type annotations, modifiers, fn keyword */
+pre code .storage {
+  color: var(--orange);
+}
+
+/* Strings: double-quoted, single-quoted, raw, template */
+pre code .string {
+  color: var(--green);
+}
+
+/* Escape sequences inside strings */
+pre code .constant.character.escape {
+  color: var(--aqua);
+}
+
+/* Numeric literals */
+pre code .constant.numeric {
+  color: var(--purple);
+}
+
+/* Language constants: true, false, nil, null, None, etc. */
+pre code .constant.language {
+  color: var(--purple);
+}
+
+/* Other constants */
+pre code .constant {
+  color: var(--purple);
+}
+
+/* Function/method definitions */
+pre code .entity.name.function {
+  color: var(--yellow);
+}
+
+/* Type names, class names, struct names */
+pre code .entity.name.type {
+  color: var(--yellow);
+}
+
+/* Module/namespace names */
+pre code .entity.name.module,
+pre code .entity.name.namespace {
+  color: var(--fg2);
+}
+
+/* Other entity names */
+pre code .entity.name {
+  color: var(--yellow);
+}
+
+/* Inherited types */
+pre code .entity.other.inherited-class {
+  color: var(--aqua);
+}
+
+/* Built-in functions, library functions */
+pre code .support.function {
+  color: var(--aqua);
+}
+
+/* Built-in types */
+pre code .support.type {
+  color: var(--yellow);
+}
+
+/* Built-in constants */
+pre code .support.constant {
+  color: var(--purple);
+}
+
+/* Variables: keep base color, differentiate parameters */
+pre code .variable {
+  color: var(--fg);
+}
+
+pre code .variable.parameter {
+  color: var(--fg2);
+}
+
+/* Operators: +, -, =, ->, etc. */
+pre code .keyword.operator {
+  color: var(--aqua);
+}
+
+/* Punctuation: subtle, not distracting */
+pre code .punctuation {
+  color: var(--fg3);
+}
+
+/* Preprocessor / meta directives */
+pre code .meta.preprocessor {
+  color: var(--aqua);
+}
+
+/* Attributes / annotations (e.g. #[derive(...)], @decorator) */
+pre code .meta.annotation,
+pre code .punctuation.definition.annotation {
+  color: var(--aqua);
+}
+
+/* Invalid / error tokens */
+pre code .invalid {
+  color: var(--red);
+}
+    </style>
   </head>
   <body>
     <a href="#main" class="skip-link">Skip to main content</a>
