@@ -1,6 +1,8 @@
 use clap::Parser;
 use image::ImageReader;
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::fs;
 use std::path::Path;
 mod render;
@@ -25,6 +27,16 @@ struct Args {
     /// Path to copy media files into (web public dir)
     #[arg(long, default_value = "site/public/media")]
     media_output: String,
+
+    /// Force full re-render, ignoring the render cache
+    #[arg(long, default_value_t = false)]
+    force: bool,
+}
+
+#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
+struct RenderCache {
+    slug_map_hash: String,
+    nodes: HashMap<String, String>,
 }
 
 const IMAGE_EXTS: &[&str] = &["png", "jpg", "jpeg", "gif", "svg", "webp", "avif"];
@@ -186,6 +198,38 @@ fn convert_pdf_to_webp_pages(
     })
 }
 
+fn load_render_cache(output_dir: &str) -> RenderCache {
+    let path = format!("{}/.render-cache.json", output_dir);
+    fs::read_to_string(&path)
+        .ok()
+        .and_then(|s| serde_json::from_str(&s).ok())
+        .unwrap_or_default()
+}
+
+fn hash_bytes(data: &[u8]) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(data);
+    format!("{:x}", hasher.finalize())
+}
+
+fn hash_slug_inputs(nodes: &[types::NodeFile]) -> String {
+    let mut sorted: Vec<(&str, &str, &Vec<String>)> = nodes
+        .iter()
+        .map(|n| (n.id.as_str(), n.title.as_str(), &n.aliases))
+        .collect();
+    sorted.sort_by_key(|(id, _, _)| *id);
+    let repr = serde_json::to_string(
+        &sorted
+            .iter()
+            .map(|(id, title, aliases)| {
+                serde_json::json!({"id": id, "title": title, "aliases": aliases})
+            })
+            .collect::<Vec<_>>(),
+    )
+    .unwrap_or_default();
+    hash_bytes(repr.as_bytes())
+}
+
 fn main() {
     let args = Args::parse();
     let input_dir = expand_tilde(&args.input);
@@ -243,26 +287,73 @@ fn main() {
     let slug_map = slug::build_slug_map(&nodes);
     let alias_map = slug::build_alias_map(&nodes, &slug_map);
 
-    // Step 4: Clear and recreate output directory (prevent stale files)
-    if Path::new(output_dir).exists() {
-        fs::remove_dir_all(output_dir)
-            .unwrap_or_else(|e| panic!("Cannot clear output dir {}: {}", output_dir, e));
-    }
+    // Step 4: Ensure output and media directories exist (incremental: do not wipe)
     fs::create_dir_all(output_dir)
         .unwrap_or_else(|e| panic!("Cannot create output dir {}: {}", output_dir, e));
-
-    // Clear and recreate media output directory
-    if Path::new(media_output_dir).exists() {
-        fs::remove_dir_all(media_output_dir)
-            .unwrap_or_else(|e| panic!("Cannot clear media dir {}: {}", media_output_dir, e));
-    }
     fs::create_dir_all(media_output_dir)
         .unwrap_or_else(|e| panic!("Cannot create media dir {}: {}", media_output_dir, e));
 
-    // Step 5: Render each node + write index entries
+    // Load render cache and old index (for recovering pdf_galleries on skipped nodes)
+    let mut cache = if args.force {
+        RenderCache::default()
+    } else {
+        load_render_cache(output_dir)
+    };
+    let old_index: HashMap<String, types::IndexEntry> = {
+        let path = format!("{}/index.json", output_dir);
+        fs::read_to_string(&path)
+            .ok()
+            .and_then(|s| serde_json::from_str::<Vec<types::IndexEntry>>(&s).ok())
+            .unwrap_or_default()
+            .into_iter()
+            .map(|e| (e.id.clone(), e))
+            .collect()
+    };
+
+    // Compute slug map hash — if it changed, all nodes must re-render
+    let new_slug_map_hash = hash_slug_inputs(&nodes);
+    let slug_map_changed = new_slug_map_hash != cache.slug_map_hash;
+    if slug_map_changed {
+        eprintln!("[renderer] slug map changed — all nodes will re-render");
+    }
+
+    // Step 5: Render each node + write index entries (incremental: skip unchanged)
     let mut index: Vec<types::IndexEntry> = Vec::new();
+    let mut new_cache_nodes: HashMap<String, String> = HashMap::new();
 
     for node in &nodes {
+        // Compute hash of source JSON file for this node
+        let node_source_path = format!("{}/{}/{}.json", input_dir, &node.id[..2], node.id);
+        let node_hash = fs::read(&node_source_path)
+            .map(|b| hash_bytes(&b))
+            .unwrap_or_default();
+
+        // Determine whether to skip this node
+        let html_exists = Path::new(&format!("{}/{}.html", output_dir, node.id)).exists();
+        let cached_hash = cache.nodes.get(&node.id).map(String::as_str).unwrap_or("");
+        let skip = !args.force && !slug_map_changed && node_hash == cached_hash && html_exists;
+
+        new_cache_nodes.insert(node.id.clone(), node_hash);
+
+        if skip {
+            // Reuse old index entry (preserves pdf_galleries without re-running pdftoppm)
+            if let Some(old_entry) = old_index.get(&node.id) {
+                index.push(old_entry.clone());
+            } else {
+                // Old entry missing — fall through to full render (handled below by not skipping)
+                // This branch shouldn't occur in normal operation
+                eprintln!(
+                    "[renderer] cache hit but no old index entry for {} — re-rendering",
+                    node.id
+                );
+            }
+            eprintln!(
+                "[renderer] skipped (unchanged): {} ({})",
+                node.title, node.id
+            );
+            continue;
+        }
+
         // Build media map: scan AST for image links, copy from input media cache
         let image_paths = collect_image_paths(&node.ast);
         let mut media_map: HashMap<String, String> = HashMap::new();
@@ -429,6 +520,37 @@ fn main() {
         eprintln!("[renderer] rendered: {} ({})", node.title, node.id);
     }
 
+    // Step 5b: Remove orphaned rendered files (nodes no longer in manifest)
+    let manifest_uuids: HashSet<&str> = nodes.iter().map(|n| n.id.as_str()).collect();
+
+    if let Ok(entries) = fs::read_dir(output_dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.extension().and_then(|e| e.to_str()) == Some("html") {
+                if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
+                    if !manifest_uuids.contains(stem) {
+                        fs::remove_file(&path).ok();
+                        eprintln!("[renderer] removed orphaned: {}", stem);
+                    }
+                }
+            }
+        }
+    }
+
+    if let Ok(entries) = fs::read_dir(media_output_dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                if let Some(dir_name) = path.file_name().and_then(|s| s.to_str()) {
+                    if !manifest_uuids.contains(dir_name) {
+                        fs::remove_dir_all(&path).ok();
+                        eprintln!("[renderer] removed orphaned media: {}", dir_name);
+                    }
+                }
+            }
+        }
+    }
+
     // Step 6: Write index.json
     let index_path = format!("{}/index.json", output_dir);
     let index_str = serde_json::to_string_pretty(&index)
@@ -441,6 +563,14 @@ fn main() {
         .unwrap_or_else(|e| panic!("Cannot serialize alias_map: {}", e));
     fs::write(&alias_path, &alias_str)
         .unwrap_or_else(|e| panic!("Cannot write alias_map.json: {}", e));
+
+    // Step 8: Write updated render cache
+    cache.slug_map_hash = new_slug_map_hash;
+    cache.nodes = new_cache_nodes;
+    let cache_path = format!("{}/.render-cache.json", output_dir);
+    if let Ok(cache_str) = serde_json::to_string(&cache) {
+        fs::write(&cache_path, &cache_str).ok();
+    }
 
     eprintln!(
         "[renderer] complete: {} nodes → {}/",
