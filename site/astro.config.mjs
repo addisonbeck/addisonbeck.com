@@ -1,6 +1,7 @@
 import { defineConfig } from "astro/config";
 import svelte from "@astrojs/svelte";
 import pagefind from "astro-pagefind";
+import { resolve } from "path";
 
 export default defineConfig({
   output: "static",
@@ -24,6 +25,18 @@ export default defineConfig({
           if (id === "/pagefind/pagefind-ui.css") {
             return "";
           }
+        },
+      },
+      {
+        name: "rendered-watcher",
+        apply: "serve",
+        configureServer(server) {
+          server.watcher.add(resolve(process.cwd(), "../rendered"));
+          server.watcher.on("change", (file) => {
+            if (file.includes("/rendered/")) {
+              server.ws.send({ type: "full-reload" });
+            }
+          });
         },
       },
     ],

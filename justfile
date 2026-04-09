@@ -27,23 +27,14 @@ upgrade-deps:
     cd site && npx --yes npm-check-updates --upgrade && npm install
     cargo update --manifest-path renderer/Cargo.toml
 
-# Kill any running preview servers
-kill-preview:
-    @pkill -f "astro preview" 2>/dev/null || true
-
-# Development: full build then preview server with export cache watcher
-dev: kill-preview
+# Development: render then Astro dev server with file watchers
+dev:
     #!/usr/bin/env bash
     set -euo pipefail
-    just build
-    cd site && npm run preview -- --host &
-    PREVIEW_PID=$!
-    trap "kill $PREVIEW_PID 2>/dev/null" EXIT
-    echo "Watching ~/.cache/org-roam-export for changes (Ctrl+C to stop)..."
-    while true; do
-        if command -v fswatch &>/dev/null; then
-            fswatch -1 ~/.cache/org-roam-export/ && just build
-        else
-            sleep 30 && just build
-        fi
-    done
+    just render
+    (fswatch -o export-cache/ | while read -r; do just render; done) &
+    CACHE_PID=$!
+    (fswatch -o renderer/src/ | while read -r; do just render; done) &
+    RENDERER_PID=$!
+    trap "kill $CACHE_PID $RENDERER_PID 2>/dev/null" EXIT
+    cd site && npm run dev
