@@ -128,8 +128,21 @@ const { title } = Astro.props;
         font-family: ui-serif, Georgia, "Times New Roman", serif;
         line-height: 1.6;
         padding: 2rem 1rem;
-        max-width: 65ch;
-        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1fr min(65ch, 100%) 1fr;
+        align-items: start;
+      }
+
+      body > * {
+        grid-column: 2;
+      }
+
+      .sidebar-slot {
+        grid-column: 3;
+        grid-row: 1 / 100;
+        position: sticky;
+        top: 2rem;
+        align-self: start;
       }
 
       /* =============================================================================

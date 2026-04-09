@@ -1,18 +1,24 @@
 ---
 import BaseLayout from "./BaseLayout.astro";
+import RecentlyViewed from "../components/RecentlyViewed.svelte";
 
 interface Props {
   title: string;
   backlinks: Array<{ id: string; title: string; slug: string }>;
   tags: string[];
+  slug: string;
 }
 
-const { title, backlinks, tags } = Astro.props;
+const { title, backlinks, tags, slug } = Astro.props;
 ---
 
 <BaseLayout title={title}>
-  <nav aria-label="breadcrumb" data-pagefind-ignore>
+  <div class="sidebar-slot" data-pagefind-ignore>
+    <RecentlyViewed client:load slug={slug} title={title} />
+  </div>
+  <nav aria-label="breadcrumb" data-pagefind-ignore class="breadcrumb-nav">
     <a href="/">← Home</a>
+    <RecentlyViewed client:load slug={slug} title={title} variant="nav" />
   </nav>
   <main id="main">
     <h1 class="page-title">{title}</h1>
@@ -55,6 +61,12 @@ const { title, backlinks, tags } = Astro.props;
 </BaseLayout>
 
 <style>
+  .breadcrumb-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
   .backlinks {
     margin-top: 3rem;
     padding-top: 1rem;

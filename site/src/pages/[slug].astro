@@ -79,6 +79,7 @@ const galleryBySlug: Record<string, PdfGalleryEntry> = Object.fromEntries(
   title={nodeEntry.title}
   backlinks={backlinks}
   tags={nodeEntry.tags ?? []}
+  slug={slug}
 >
   {
     htmlParts.map((part, i) => (
