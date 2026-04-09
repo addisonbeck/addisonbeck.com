@@ -32,9 +32,9 @@ dev:
     #!/usr/bin/env bash
     set -euo pipefail
     just render
-    (fswatch -o export-cache/ | while read -r; do just render; done) &
+    (fswatch -o ~/.cache/org-roam-export/ | while read -r; do rsync -a --delete ~/.cache/org-roam-export/ export-cache/ && just render; done) &
     CACHE_PID=$!
     (fswatch -o renderer/src/ | while read -r; do just render; done) &
     RENDERER_PID=$!
     trap "kill $CACHE_PID $RENDERER_PID 2>/dev/null" EXIT
-    cd site && npm run dev
+    cd site && npm run dev -- --host

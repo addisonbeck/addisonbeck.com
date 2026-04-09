@@ -89,15 +89,10 @@
     margin-bottom: 0.4rem;
   }
 
-  .rv-sidebar li::before {
-    content: "– ";
-    color: var(--fg4);
-  }
-
   .rv-sidebar a {
     color: var(--fg4);
     font-size: 0.8rem;
-    text-decoration: none;
+    text-decoration: underline;
     line-height: 1.3;
     display: block;
   }
@@ -141,15 +136,10 @@
     margin-bottom: 0.25rem;
   }
 
-  .rv-nav li::before {
-    content: "– ";
-    color: var(--fg4);
-  }
-
   .rv-nav a {
     color: var(--fg3);
     font-size: 0.8rem;
-    text-decoration: none;
+    text-decoration: underline;
   }
 
   .rv-nav a:hover {
