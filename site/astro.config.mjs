@@ -1,7 +1,8 @@
 import { defineConfig } from "astro/config";
 import svelte from "@astrojs/svelte";
 import pagefind from "astro-pagefind";
-import { resolve } from "path";
+import { resolve, extname } from "path";
+import { createReadStream, existsSync } from "fs";
 
 export default defineConfig({
   output: "static",
@@ -13,18 +14,29 @@ export default defineConfig({
   vite: {
     plugins: [
       {
+        // Serve pagefind assets from dist/pagefind/ in dev mode.
+        // pagefind.js is imported with /* @vite-ignore */ so Vite skips module
+        // graph analysis for it — the browser fetches it directly via HTTP here.
         name: "pagefind-dev-shim",
         apply: "serve",
-        resolveId(id) {
-          if (id.startsWith("/pagefind/")) return id;
-        },
-        load(id) {
-          if (id === "/pagefind/pagefind-ui.js") {
-            return 'window.PagefindUI = class { constructor() { console.warn("Pagefind not available in dev mode — run `just build` first to generate the search index."); } };';
-          }
-          if (id === "/pagefind/pagefind-ui.css") {
-            return "";
-          }
+        configureServer(server) {
+          server.middlewares.use("/pagefind", (req, res, next) => {
+            const file = req.url.split("?")[0].replace(/^\//, "");
+            const filePath = resolve(process.cwd(), "dist/pagefind", file);
+            if (existsSync(filePath)) {
+              const mime =
+                {
+                  ".js": "application/javascript",
+                  ".css": "text/css",
+                  ".wasm": "application/wasm",
+                  ".json": "application/json",
+                }[extname(filePath)] ?? "application/octet-stream";
+              res.setHeader("Content-Type", mime);
+              createReadStream(filePath).pipe(res);
+            } else {
+              next();
+            }
+          });
         },
       },
       {
@@ -40,10 +52,5 @@ export default defineConfig({
         },
       },
     ],
-    build: {
-      rollupOptions: {
-        external: ["/pagefind/pagefind-ui.js"],
-      },
-    },
   },
 });

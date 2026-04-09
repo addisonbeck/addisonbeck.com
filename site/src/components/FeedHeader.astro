@@ -1,0 +1,141 @@
+---
+interface Props {
+  tag?: string;
+}
+const { tag } = Astro.props;
+---
+
+<header>
+  <h1>addisonbeck.com</h1>
+  <input
+    type="search"
+    id="feed-filter"
+    aria-label="Filter posts"
+    placeholder={tag ? `Search ${tag}` : "Search"}
+    autocomplete="off"
+    spellcheck="false"
+  />
+  <nav class="header-icons">
+    <a href="/rss-feeds" aria-label="RSS Feeds">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width="18"
+        height="18"
+        fill="currentColor"
+        aria-hidden="true"
+        style="display: block;"
+      >
+        <circle cx="6.18" cy="17.82" r="2.18"></circle>
+        <path
+          d="M4 4.44v2.83c7.03 0 12.73 5.7 12.73 12.73h2.83c0-8.59-6.97-15.56-15.56-15.56zm0 5.66v2.83c3.9 0 7.07 3.17 7.07 7.07h2.83c0-5.47-4.43-9.9-9.9-9.9z"
+        ></path>
+      </svg>
+    </a>
+  </nav>
+</header>
+
+<style>
+  #feed-filter {
+    flex: 1;
+    min-width: 0;
+    background: var(--bg1);
+    border: 1px solid var(--bg3);
+    border-radius: 4px;
+    color: var(--fg);
+    font-family: inherit;
+    font-size: 0.875rem;
+    padding: 0.2rem 0.5rem;
+    outline: none;
+    align-self: center;
+  }
+
+  #feed-filter:focus {
+    border-color: var(--aqua);
+  }
+
+  #feed-filter::placeholder {
+    color: var(--fg4);
+  }
+
+  .header-icons {
+    display: flex;
+    align-items: center;
+    align-self: center;
+    gap: 0.5rem;
+  }
+</style>
+
+<script>
+  const input = document.getElementById("feed-filter") as HTMLInputElement;
+  const items = document.querySelectorAll<HTMLElement>(".feed-item");
+  const noResults = document.getElementById("feed-no-results") as HTMLElement;
+
+  let pagefind: any = null;
+  let debounceTimer: ReturnType<typeof setTimeout>;
+
+  function showAll() {
+    items.forEach((item) => {
+      item.hidden = false;
+    });
+    noResults.hidden = true;
+  }
+
+  function applySlugSet(slugs: Set<string>) {
+    let anyVisible = false;
+    items.forEach((item) => {
+      const matches = slugs.has(item.dataset.slug!);
+      item.hidden = !matches;
+      if (matches) anyVisible = true;
+    });
+    noResults.hidden = anyVisible;
+  }
+
+  function fallbackFilter(q: string) {
+    let anyVisible = false;
+    items.forEach((item) => {
+      const matches = item.textContent!.toLowerCase().includes(q);
+      item.hidden = !matches;
+      if (matches) anyVisible = true;
+    });
+    noResults.hidden = anyVisible;
+  }
+
+  async function runSearch(q: string) {
+    if (!q) {
+      showAll();
+      return;
+    }
+
+    if (!pagefind) {
+      try {
+        const url = "/pagefind/pagefind.js";
+        pagefind = await import(url);
+        await pagefind.init?.();
+      } catch {
+        fallbackFilter(q);
+        return;
+      }
+    }
+
+    try {
+      const search = await pagefind.search(q);
+      const data = await Promise.all(search.results.map((r: any) => r.data()));
+      const slugs = new Set(
+        data.map((d: any) => d.url.replace(/^\/|\/$/g, "")),
+      );
+      applySlugSet(slugs);
+    } catch (e) {
+      console.warn("[feed-filter] search failed:", e);
+      fallbackFilter(q);
+    }
+  }
+
+  input.addEventListener("input", () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(
+      () => runSearch(input.value.trim().toLowerCase()),
+      300,
+    );
+  });
+</script>

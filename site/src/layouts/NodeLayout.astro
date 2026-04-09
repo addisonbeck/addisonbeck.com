@@ -20,9 +20,9 @@ const { title, backlinks, tags, slug } = Astro.props;
     <a href="/">← Home</a>
     <RecentlyViewed client:load slug={slug} title={title} variant="nav" />
   </nav>
-  <main id="main">
+  <main id="main" data-pagefind-body>
     <h1 class="page-title">{title}</h1>
-    <article data-pagefind-body>
+    <article>
       <slot />
     </article>
     {

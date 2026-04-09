@@ -11,6 +11,10 @@ render:
         --input export-cache \
         --output rendered
 
+# Astro build + Pagefind index (assumes render has already run)
+site-build:
+    cd site && npm run build
+
 # Build full site: render then Astro build
 build: render
     cd site && npm install && npm run build
@@ -31,10 +35,10 @@ upgrade-deps:
 dev:
     #!/usr/bin/env bash
     set -euo pipefail
-    just render
-    (fswatch -o ~/.cache/org-roam-export/ | while read -r; do rsync -a --delete ~/.cache/org-roam-export/ export-cache/ && just render; done) &
+    just build
+    (fswatch -o ~/.cache/org-roam-export/ | while read -r; do rsync -a --delete ~/.cache/org-roam-export/ export-cache/ && just render && just site-build; done) &
     CACHE_PID=$!
-    (fswatch -o renderer/src/ | while read -r; do just render; done) &
+    (fswatch -o renderer/src/ | while read -r; do just render && just site-build; done) &
     RENDERER_PID=$!
     trap "kill $CACHE_PID $RENDERER_PID 2>/dev/null" EXIT
     cd site && npm run dev -- --host

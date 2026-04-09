@@ -2,6 +2,7 @@
 import { readFileSync } from "fs";
 import { resolve } from "path";
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import FeedHeader from "../../components/FeedHeader.astro";
 
 export function getStaticPaths() {
   const indexPath = resolve(process.cwd(), "../rendered/index.json");
@@ -41,46 +42,7 @@ function formatDate(iso: string): string {
 ---
 
 <BaseLayout title={`addisonbeck.com — ${tag}`}>
-  <header>
-    <h1>addisonbeck.com</h1>
-    <nav class="header-icons">
-      <a href="/search" aria-label="Search">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          width="16"
-          height="16"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-          style="display: block;"
-        >
-          <circle cx="11" cy="11" r="8"></circle>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-        </svg>
-      </a>
-      <span class="divider" aria-hidden="true">|</span>
-      <a href="/rss-feeds" aria-label="RSS Feeds">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          width="18"
-          height="18"
-          fill="currentColor"
-          aria-hidden="true"
-          style="display: block;"
-        >
-          <circle cx="6.18" cy="17.82" r="2.18"></circle>
-          <path
-            d="M4 4.44v2.83c7.03 0 12.73 5.7 12.73 12.73h2.83c0-8.59-6.97-15.56-15.56-15.56zm0 5.66v2.83c3.9 0 7.07 3.17 7.07 7.07h2.83c0-5.47-4.43-9.9-9.9-9.9z"
-          ></path>
-        </svg>
-      </a>
-    </nav>
-  </header>
+  <FeedHeader tag={tag} />
   <nav class="breadcrumb">
     <a href="/">addisonbeck.com</a> / {tag}
   </nav>
@@ -88,7 +50,7 @@ function formatDate(iso: string): string {
     <ul class="feed">
       {
         sorted.map((node) => (
-          <li class="feed-item">
+          <li class="feed-item" data-slug={node.slug}>
             <div class="feed-item-header">
               <a href={`/${node.slug}`}>{node.title}</a>
               {formatDate(node.last_modified) && (
@@ -111,19 +73,6 @@ function formatDate(iso: string): string {
         ))
       }
     </ul>
+    <p id="feed-no-results" hidden>No results.</p>
   </main>
 </BaseLayout>
-
-<style>
-  .header-icons {
-    margin-left: auto;
-    display: flex;
-    align-items: center;
-    align-self: center;
-    gap: 0.5rem;
-  }
-  .divider {
-    color: var(--fg4);
-    user-select: none;
-  }
-</style>
