@@ -89,6 +89,11 @@
     margin-bottom: 0.4rem;
   }
 
+  .rv-sidebar li::before {
+    content: "– ";
+    color: var(--fg4);
+  }
+
   .rv-sidebar a {
     color: var(--fg4);
     font-size: 0.8rem;
@@ -134,6 +139,11 @@
 
   .rv-nav li {
     margin-bottom: 0.25rem;
+  }
+
+  .rv-nav li::before {
+    content: "– ";
+    color: var(--fg4);
   }
 
   .rv-nav a {
