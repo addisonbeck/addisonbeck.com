@@ -7,12 +7,13 @@ interface Props {
   backlinks: Array<{ id: string; title: string; slug: string }>;
   tags: string[];
   slug: string;
+  description?: string;
 }
 
-const { title, backlinks, tags, slug } = Astro.props;
+const { title, backlinks, tags, slug, description } = Astro.props;
 ---
 
-<BaseLayout title={title}>
+<BaseLayout title={title} description={description}>
   <div class="sidebar-slot" data-pagefind-ignore>
     <RecentlyViewed client:load slug={slug} title={title} />
   </div>
