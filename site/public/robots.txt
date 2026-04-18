@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://addisonbeck.com/sitemap-index.xml
