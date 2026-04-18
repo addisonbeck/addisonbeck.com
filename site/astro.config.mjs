@@ -1,12 +1,14 @@
 import { defineConfig } from "astro/config";
 import svelte from "@astrojs/svelte";
 import pagefind from "astro-pagefind";
+import sitemap from "@astrojs/sitemap";
 import { resolve, extname } from "path";
 import { createReadStream, existsSync } from "fs";
 
 export default defineConfig({
+  site: "https://addisonbeck.com",
   output: "static",
-  integrations: [svelte(), pagefind()],
+  integrations: [svelte(), pagefind(), sitemap()],
   outDir: "./dist",
   server: {
     allowedHosts: true,

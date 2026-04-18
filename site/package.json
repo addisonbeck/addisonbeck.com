@@ -9,11 +9,12 @@
     "preview": "astro preview"
   },
   "dependencies": {
-    "astro": "6.1.4",
     "@astrojs/rss": "^4.0.18",
+    "@astrojs/sitemap": "^3.7.2",
     "@astrojs/svelte": "8.0.4",
-    "svelte": "5.55.1",
-    "astro-pagefind": "1.8.6"
+    "astro": "6.1.4",
+    "astro-pagefind": "1.8.6",
+    "svelte": "5.55.1"
   },
   "devDependencies": {
     "prettier": "^3.4.0",
