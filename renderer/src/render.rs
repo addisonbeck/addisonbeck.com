@@ -311,10 +311,21 @@ fn collect_preview_text(node: &Value, buf: &mut String, limit: usize) {
                         buf.push_str(v);
                     }
                 }
-                // For links, extract description (children) only
+                // For links, extract description (children) only.
+                // Honor post-blank so a trailing space in the source (e.g.
+                // "[[link][text]] next word") isn't lost — org-element stores
+                // that space as post-blank on the link, not as a leading char
+                // in the following sibling string.
                 "link" => {
                     for child in arr.iter().skip(2) {
                         collect_preview_text(child, buf, limit);
+                    }
+                    let post_blank = arr[1]
+                        .get("post-blank")
+                        .and_then(|v| v.as_u64())
+                        .unwrap_or(0);
+                    if post_blank > 0 {
+                        buf.push(' ');
                     }
                 }
                 // After a paragraph add a space so sentences don't run together
@@ -669,6 +680,27 @@ mod tests {
         let ctx = empty_ctx(&slugs, &media, &ss);
         let result = render_node(&node, &ctx);
         assert!(result.contains("text"), "Expected children rendered");
+    }
+
+    // REND-10b: extract_preview_text preserves space after link via post-blank
+    // Regression test for "The sitepublishes" bug: org-element stores the
+    // trailing space after [[link][desc]] as post-blank on the link node, not
+    // as a leading char in the following sibling string.
+    #[test]
+    fn test_preview_text_link_post_blank_space() {
+        let ast = json!(["org-data", null,
+            ["section", null,
+                ["paragraph", null,
+                    ["link", {"type": "id", "raw-link": "id:ABCD", "path": "ABCD", "post-blank": 1}, "The site"],
+                    "publishes stuff"
+                ]
+            ]
+        ]);
+        let result = extract_preview_text(&ast, 200);
+        assert!(
+            result.contains("The site publishes"),
+            "Expected space between link text and following word, got: {result}"
+        );
     }
 
     // REND-11: Image file link renders as <img> when in media_map
