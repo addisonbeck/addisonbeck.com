@@ -23,7 +23,30 @@ function formatDate(iso: string): string {
 }
 ---
 
-<BaseLayout title="addisonbeck.com">
+<BaseLayout
+  title="Addison Beck — Software Engineer"
+  description="Personal notes and second brain of Addison Beck, a software engineer. Thoughts on software, Rust, Emacs, and engineering."
+>
+  <Fragment slot="head">
+    <script
+      type="application/ld+json"
+      set:html={JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "Person",
+        name: "Addison Beck",
+        url: "https://addisonbeck.com",
+        jobTitle: "Software Engineer",
+        sameAs: ["https://github.com/addisonbeck"],
+        knowsAbout: [
+          "Software Engineering",
+          "Rust",
+          "Emacs",
+          "Org-mode",
+          "Systems Programming",
+        ],
+      })}
+    />
+  </Fragment>
   <FeedHeader />
   <main id="main">
     <ul class="feed">
