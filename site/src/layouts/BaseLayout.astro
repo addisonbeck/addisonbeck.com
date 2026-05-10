@@ -162,7 +162,6 @@ const { title, description } = Astro.props;
       h4,
       h5,
       h6 {
-        color: var(--fg);
         line-height: 1.25;
         margin-top: 2rem;
         margin-bottom: 0.5rem;
@@ -170,17 +169,27 @@ const { title, description } = Astro.props;
 
       h1 {
         font-size: 1.5rem;
+        color: var(--yellow);
       }
       h2 {
         font-size: 1.25rem;
+        color: var(--blue);
       }
       h3 {
         font-size: 1.1rem;
+        color: var(--purple);
       }
-      h4,
-      h5,
+      h4 {
+        font-size: 1rem;
+        color: var(--red);
+      }
+      h5 {
+        font-size: 1rem;
+        color: var(--green);
+      }
       h6 {
         font-size: 1rem;
+        color: var(--fg);
       }
 
       p {
@@ -300,6 +309,30 @@ const { title, description } = Astro.props;
 
       li p {
         margin-bottom: 0;
+      }
+
+      /* =============================================================================
+   Tables
+   ============================================================================= */
+
+      table {
+        border-collapse: collapse;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+        width: 100%;
+      }
+
+      table td {
+        border: 1px solid var(--bg3);
+        padding: 0.35rem 0.8rem;
+        vertical-align: top;
+      }
+
+      table tr:first-child td {
+        background-color: var(--bg2);
+        color: var(--fg2);
+        font-weight: bold;
+        border-color: var(--bg3);
       }
 
       /* =============================================================================
